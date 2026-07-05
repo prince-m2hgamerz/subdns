@@ -33,7 +33,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 1. **Fork** the repository
 2. **Clone** your fork:
    ```bash
-   git clone https://github.com/your-username/subdns.git
+   git clone https://github.com/prince-m2hgamerz/subdns.git
    cd subdns
    ```
 3. **Install dependencies:**

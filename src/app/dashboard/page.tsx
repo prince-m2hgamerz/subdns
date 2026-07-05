@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import type { Activity } from "@prisma/client";
 import { Globe, Activity as ActivityIcon, Shield, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -90,7 +89,7 @@ export default async function DashboardPage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {stats.recentActivity.map((event: Activity) => (
+              {stats.recentActivity.map((event: (typeof stats.recentActivity)[number]) => (
                 <div
                   key={event.id}
                   className="flex items-center justify-between rounded-lg border border-border px-4 py-3"
