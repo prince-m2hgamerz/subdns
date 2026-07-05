@@ -1,15 +1,14 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail } from "lucide-react";
 import Link from "next/link";
-
-export const metadata: Metadata = {
-  title: "Verify Email — SubDNS",
-};
+import { LiquidChrome } from "@/components/ui/liquid-chrome";
 
 export default function VerifyPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
+      <LiquidChrome baseColor={[0.05, 0.08, 0.12]} speed={0.5} amplitude={0.35} className="absolute inset-0 opacity-30" />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-900">

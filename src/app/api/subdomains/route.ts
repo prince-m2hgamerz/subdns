@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { createDnsRecord } from "@/lib/cloudflare";
 import { logActivity } from "@/lib/activity";
 import { isValidSubdomain, isReservedName } from "@/lib/utils";
@@ -11,11 +11,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const subdomains = await prisma.subdomain.findMany({
-    where: { userId },
-      include: { dnsRecords: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const { data: subdomains } = await supabase
+    .from("subdomains")
+    .select("*, dns_records(*)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
   return NextResponse.json({ subdomains });
 }
@@ -43,22 +43,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "This subdomain name is reserved." }, { status: 400 });
   }
 
-  const existing = await prisma.subdomain.findUnique({
-    where: { name_domain: { name, domain: "m2hio.in" } },
-  });
+  const { data: existing } = await supabase
+    .from("subdomains")
+    .select("id")
+    .eq("name", name)
+    .eq("domain", "m2hio.in")
+    .maybeSingle();
 
   if (existing) {
     return NextResponse.json({ error: "Subdomain already taken" }, { status: 409 });
   }
 
-  const userSubdomainCount = await prisma.subdomain.count({
-    where: { userId },
-  });
+  const { count: userSubdomainCount } = await supabase
+    .from("subdomains")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  const limit = user?.maxSubdomains ?? 10;
+  const { data: user } = await supabase
+    .from("users")
+    .select("max_subdomains")
+    .eq("id", userId)
+    .single();
+  const limit = user?.max_subdomains ?? 10;
 
-  if (userSubdomainCount >= limit) {
+  if ((userSubdomainCount ?? 0) >= limit) {
     return NextResponse.json(
       { error: `Subdomain limit (${limit}) reached` },
       { status: 429 }
@@ -74,20 +82,21 @@ export async function POST(req: NextRequest) {
       ttl: 1,
     });
 
-    const subdomain = await prisma.subdomain.create({
-      data: {
+    const { data: subdomain } = await supabase
+      .from("subdomains")
+      .insert({
         name,
         domain: "m2hio.in",
-        fullDomain: `${name}.m2hio.in`,
+        full_domain: `${name}.m2hio.in`,
         target,
         type,
         proxied,
         status: "ACTIVE",
-        cloudflareId: cfRecord.result?.id ?? "",
-      userId,
-    },
-    include: { dnsRecords: true },
-    });
+        cloudflare_id: cfRecord.result?.id ?? "",
+        user_id: userId,
+      })
+      .select("*, dns_records(*)")
+      .single();
 
     await logActivity({
       userId,

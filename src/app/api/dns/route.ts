@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { createDnsRecord, detectDuplicateRecords } from "@/lib/cloudflare";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
@@ -28,19 +28,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const subdomain = await prisma.subdomain.findFirst({
-    where: { id: subdomainId, userId },
-  });
+  const { data: subdomain } = await supabase
+    .from("subdomains")
+    .select("id, name, domain, cloudflare_id, user_id")
+    .eq("id", subdomainId)
+    .eq("user_id", userId)
+    .single();
 
   if (!subdomain) {
     return NextResponse.json({ error: "Subdomain not found" }, { status: 404 });
   }
 
-  const recordCount = await prisma.dnsRecord.count({
-    where: { subdomainId },
-  });
+  const { count: recordCount } = await supabase
+    .from("dns_records")
+    .select("*", { count: "exact", head: true })
+    .eq("subdomain_id", subdomainId);
 
-  if (recordCount >= 50) {
+  if ((recordCount ?? 0) >= 50) {
     return NextResponse.json({ error: "DNS record limit (50) reached" }, { status: 429 });
   }
 
@@ -64,8 +68,9 @@ export async function POST(req: NextRequest) {
       ...(priority !== undefined ? { priority } : {}),
     });
 
-    const record = await prisma.dnsRecord.create({
-      data: {
+    const { data: record } = await supabase
+      .from("dns_records")
+      .insert({
         type,
         name: name ?? subdomain.name,
         content,
@@ -73,10 +78,11 @@ export async function POST(req: NextRequest) {
         priority,
         proxied,
         status: "ACTIVE",
-        cloudflareId: cfRecord.result?.id ?? "",
-        subdomainId,
-      },
-    });
+        cloudflare_id: cfRecord.result?.id ?? "",
+        subdomain_id: subdomainId,
+      })
+      .select("*")
+      .single();
 
     await logActivity({
       userId,

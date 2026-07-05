@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -10,27 +10,30 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
 
   if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isBanned: true,
-      createdAt: true,
-      _count: { select: { subdomains: true } },
-    },
-  });
+  const { data: users } = await supabase
+    .from("users")
+    .select("id, name, email, role, is_banned, created_at")
+    .order("created_at", { ascending: false });
 
-  return NextResponse.json(users);
+  const usersWithCount = await Promise.all(
+    (users ?? []).map(async (u) => {
+      const { count } = await supabase
+        .from("subdomains")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", u.id);
+      return { ...u, _count: { subdomains: count ?? 0 } };
+    })
+  );
+
+  return NextResponse.json(usersWithCount);
 }

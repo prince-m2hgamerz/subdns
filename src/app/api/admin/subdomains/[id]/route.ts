@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function PATCH(
   req: Request,
@@ -13,10 +13,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
 
   if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -33,13 +34,12 @@ export async function PATCH(
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
-  const subdomain = await prisma.subdomain.update({
-    where: { id },
-    data: updateData,
-    include: {
-      user: { select: { email: true, name: true } },
-    },
-  });
+  const { data: subdomain } = await supabase
+    .from("subdomains")
+    .update(updateData)
+    .eq("id", id)
+    .select("*, user:users(email, name)")
+    .single();
 
   return NextResponse.json(subdomain);
 }
@@ -54,10 +54,11 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
 
   if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -65,8 +66,8 @@ export async function DELETE(
 
   const { id } = await params;
 
-  await prisma.dnsRecord.deleteMany({ where: { subdomainId: id } });
-  await prisma.subdomain.delete({ where: { id } });
+  await supabase.from("dns_records").delete().eq("subdomain_id", id);
+  await supabase.from("subdomains").delete().eq("id", id);
 
   return NextResponse.json({ success: true });
 }

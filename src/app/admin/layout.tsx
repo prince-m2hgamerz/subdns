@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import AdminSidebar from "./AdminSidebar";
 
 export default async function AdminLayout({
@@ -13,10 +13,11 @@ export default async function AdminLayout({
   const userId = (session?.user as { id?: string })?.id;
   if (!userId) redirect("/auth/login");
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true, name: true, email: true },
-  });
+  const { data: user } = await supabase
+    .from("users")
+    .select("role, name, email")
+    .eq("id", userId)
+    .single();
 
   if (user?.role !== "ADMIN" && user?.role !== "SUPER_ADMIN") redirect("/dashboard");
 

@@ -1,11 +1,9 @@
 import { NextAuthOptions } from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { prisma } from "./prisma";
+import { supabase } from "./supabase";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: {
     signIn: "/auth/login",
@@ -24,15 +22,17 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email and password required");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        const { data: user } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", credentials.email)
+          .single();
 
         if (!user || !user.password) {
           throw new Error("Invalid credentials");
         }
 
-        if (user.isBanned) {
+        if (user.is_banned) {
           throw new Error("Account suspended");
         }
 
@@ -58,11 +58,12 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
       }
       if (token.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { role: true, isBanned: true },
-        });
-        if (!dbUser || dbUser.isBanned) {
+        const { data: dbUser } = await supabase
+          .from("users")
+          .select("role, is_banned")
+          .eq("id", token.id as string)
+          .single();
+        if (!dbUser || dbUser.is_banned) {
           return {};
         }
         token.role = dbUser.role;

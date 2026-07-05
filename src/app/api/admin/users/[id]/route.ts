@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function PATCH(
   req: Request,
@@ -13,10 +13,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
 
   if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -26,26 +27,24 @@ export async function PATCH(
   const body = await req.json();
 
   const updateData: Record<string, unknown> = {};
-  if (typeof body.banned === "boolean") updateData.isBanned = body.banned;
+  if (typeof body.banned === "boolean") updateData.is_banned = body.banned;
   if (body.role === "USER" || body.role === "ADMIN") updateData.role = body.role;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
-  const user = await prisma.user.update({
-    where: { id },
-    data: updateData,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isBanned: true,
-      createdAt: true,
-      _count: { select: { subdomains: true } },
-    },
-  });
+  const { data: user } = await supabase
+    .from("users")
+    .update(updateData)
+    .eq("id", id)
+    .select("id, name, email, role, is_banned, created_at")
+    .single();
 
-  return NextResponse.json(user);
+  const { count } = await supabase
+    .from("subdomains")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", id);
+
+  return NextResponse.json({ ...user, _count: { subdomains: count ?? 0 } });
 }

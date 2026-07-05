@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getUserId } from "@/lib/get-user-id";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -8,7 +8,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  const { data: user } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
   if (!user || user.role === "USER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -20,10 +24,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const updated = await prisma.contactMessage.update({
-    where: { id },
-    data: { status },
-  });
+  const { data: updated } = await supabase
+    .from("contact_messages")
+    .update({ status })
+    .eq("id", id)
+    .select("*")
+    .single();
 
   return NextResponse.json({ message: updated });
 }

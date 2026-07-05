@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -11,25 +11,28 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const [totalUsers, totalSubdomains, totalRecords, recentUsers, recentSubdomains] =
-    await Promise.all([
-      prisma.user.count(),
-      prisma.subdomain.count(),
-      prisma.dnsRecord.count(),
-      prisma.user.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        select: { id: true, name: true, email: true, createdAt: true },
-      }),
-      prisma.subdomain.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        include: { user: { select: { name: true, email: true } } },
-      }),
-    ]);
+  const [
+    { count: totalUsers },
+    { count: totalSubdomains },
+    { count: totalRecords },
+    { data: recentUsers },
+    { data: recentSubdomains },
+  ] = await Promise.all([
+    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("subdomains").select("*", { count: "exact", head: true }),
+    supabase.from("dns_records").select("*", { count: "exact", head: true }),
+    supabase.from("users")
+      .select("id, name, email, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("subdomains")
+      .select("*, user:users(name, email)")
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
 
   return NextResponse.json({
-    stats: { totalUsers, totalSubdomains, totalRecords },
+    stats: { totalUsers: totalUsers ?? 0, totalSubdomains: totalSubdomains ?? 0, totalRecords: totalRecords ?? 0 },
     recentUsers,
     recentSubdomains,
   });

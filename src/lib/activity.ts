@@ -1,4 +1,4 @@
-import { prisma } from "./prisma";
+import { supabase } from "./supabase";
 
 type ActivityEvent =
   | "DNS_CREATED" | "DNS_DELETED" | "DNS_UPDATED"
@@ -19,22 +19,20 @@ export async function logActivity(params: {
   metadata?: unknown;
 }) {
   try {
-    await prisma.activity.create({
-      data: {
-        type: params.type || params.event || "API_REQUEST",
-        description:
-          params.description ||
-          (typeof params.metadata === "string"
-            ? params.metadata
-            : JSON.stringify(params.metadata || {})),
-        userId: params.userId,
-        subdomainId: params.subdomainId,
-        ip: params.ip,
-        userAgent: params.userAgent,
-        metadata: typeof params.metadata === "object" && params.metadata !== null
+    await supabase.from("activities").insert({
+      type: params.type || params.event || "API_REQUEST",
+      description:
+        params.description ||
+        (typeof params.metadata === "string"
           ? params.metadata
-          : {},
-      },
+          : JSON.stringify(params.metadata || {})),
+      user_id: params.userId,
+      subdomain_id: params.subdomainId,
+      ip: params.ip,
+      user_agent: params.userAgent,
+      metadata: typeof params.metadata === "object" && params.metadata !== null
+        ? params.metadata
+        : {},
     });
   } catch (error) {
     console.error("Failed to log activity:", error);

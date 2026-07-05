@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
 
@@ -14,9 +14,11 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined;
   const userAgent = req.headers.get("user-agent") || undefined;
 
-  const contact = await prisma.contactMessage.create({
-    data: { name, email, subject, message, userId },
-  });
+  const { data: contact } = await supabase
+    .from("contact_messages")
+    .insert({ name, email, subject, message, user_id: userId })
+    .select("id")
+    .single();
 
   await logActivity({
     userId: userId || undefined,
@@ -24,10 +26,10 @@ export async function POST(req: NextRequest) {
     description: `Contact form submission: ${subject}`,
     ip,
     userAgent,
-    metadata: { contactId: contact.id, name, email },
+    metadata: { contactId: contact!.id, name, email },
   });
 
-  return NextResponse.json({ success: true, id: contact.id });
+  return NextResponse.json({ success: true, id: contact!.id });
 }
 
 export async function GET(req: NextRequest) {
@@ -36,7 +38,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  const { data: user } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
   if (!user || user.role === "USER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -44,13 +50,16 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
 
-  const where = status ? { status } : {};
+  let query = supabase
+    .from("contact_messages")
+    .select("*, users(name, email)")
+    .order("created_at", { ascending: false });
 
-  const messages = await prisma.contactMessage.findMany({
-    where,
-    include: { user: { select: { name: true, email: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  const { data: messages } = await query;
 
   return NextResponse.json({ messages });
 }

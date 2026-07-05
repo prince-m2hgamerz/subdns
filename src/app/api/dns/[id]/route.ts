@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { updateDnsRecord, deleteDnsRecord } from "@/lib/cloudflare";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
@@ -16,17 +16,20 @@ export async function PATCH(
   const { id } = await params;
   const { content, ttl, priority, proxied } = await req.json();
 
-  const record = await prisma.dnsRecord.findFirst({
-    where: { id, subdomain: { userId } },
-  });
+  const { data: record } = await supabase
+    .from("dns_records")
+    .select("*, subdomains!inner(user_id)")
+    .eq("id", id)
+    .eq("subdomains.user_id", userId)
+    .single();
 
   if (!record) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   try {
-    if (record.cloudflareId) {
-      await updateDnsRecord(record.cloudflareId, {
+    if (record.cloudflare_id) {
+      await updateDnsRecord(record.cloudflare_id, {
         type: record.type,
         name: record.name,
         content: content ?? record.content,
@@ -36,15 +39,17 @@ export async function PATCH(
       });
     }
 
-    const updated = await prisma.dnsRecord.update({
-      where: { id },
-      data: {
+    const { data: updated } = await supabase
+      .from("dns_records")
+      .update({
         ...(content !== undefined && { content }),
         ...(ttl !== undefined && { ttl }),
         ...(priority !== undefined && { priority }),
         ...(proxied !== undefined && { proxied }),
-      },
-    });
+      })
+      .eq("id", id)
+      .select("*")
+      .single();
 
     await logActivity({
       userId,
@@ -72,20 +77,23 @@ export async function DELETE(
 
   const { id } = await params;
 
-  const record = await prisma.dnsRecord.findFirst({
-    where: { id, subdomain: { userId } },
-  });
+  const { data: record } = await supabase
+    .from("dns_records")
+    .select("*, subdomains!inner(user_id)")
+    .eq("id", id)
+    .eq("subdomains.user_id", userId)
+    .single();
 
   if (!record) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   try {
-    if (record.cloudflareId) {
-      await deleteDnsRecord(record.cloudflareId);
+    if (record.cloudflare_id) {
+      await deleteDnsRecord(record.cloudflare_id);
     }
 
-    await prisma.dnsRecord.delete({ where: { id } });
+    await supabase.from("dns_records").delete().eq("id", id);
 
     await logActivity({
       userId,

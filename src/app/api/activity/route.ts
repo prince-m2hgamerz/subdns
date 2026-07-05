@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getUserId } from "@/lib/get-user-id";
 
 export async function GET(req: NextRequest) {
@@ -11,24 +11,22 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") ?? "1");
   const limit = parseInt(searchParams.get("limit") ?? "20");
+  const offset = (page - 1) * limit;
 
-  const [activities, total] = await Promise.all([
-    prisma.activity.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.activity.count({ where: { userId } }),
-  ]);
+  const { data: activities, count: total } = await supabase
+    .from("activities")
+    .select("*", { count: "exact" })
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   return NextResponse.json({
     activities,
     pagination: {
       page,
       limit,
-      total,
-      pages: Math.ceil(total / limit),
+      total: total ?? 0,
+      pages: Math.ceil((total ?? 0) / limit),
     },
   });
 }

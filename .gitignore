@@ -52,3 +52,5 @@ next-env.d.ts
 
 # Obsidian project notes vault
 /SubDNS/
+
+.vercel

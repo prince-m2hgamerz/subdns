@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -10,10 +10,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
 
   if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -24,31 +25,23 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get("limit") ?? "20");
   const type = searchParams.get("type") ?? "";
 
-  const where: Record<string, unknown> = {};
-  if (type) {
-    where.type = type;
-  }
+  let query = supabase
+    .from("activities")
+    .select("*, user:users(name, email)", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range((page - 1) * limit, page * limit - 1);
 
-  const [activities, total] = await Promise.all([
-    prisma.activity.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-      include: {
-        user: { select: { name: true, email: true } },
-      },
-    }),
-    prisma.activity.count({ where }),
-  ]);
+  if (type) query = query.eq("type", type);
+
+  const { data: activities, count: total } = await query;
 
   return NextResponse.json({
     activities,
     pagination: {
       page,
       limit,
-      total,
-      pages: Math.ceil(total / limit),
+      total: total ?? 0,
+      pages: Math.ceil((total ?? 0) / limit),
     },
   });
 }

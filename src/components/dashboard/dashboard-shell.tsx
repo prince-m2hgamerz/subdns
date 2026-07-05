@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { DashboardNavbar } from "./navbar";
-import { LiquidChrome } from "@/components/liquid-chrome";
+import { LiquidChrome } from "@/components/ui/liquid-chrome";
 
 export function DashboardShell({
   children,

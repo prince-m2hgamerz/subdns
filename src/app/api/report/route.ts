@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
 
@@ -18,20 +18,24 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || undefined;
   const userAgent = req.headers.get("user-agent") || undefined;
 
-  const report = await prisma.report.create({
-    data: { type: type || "ISSUE", subject, description, userId },
-  });
+  const { data: report } = await supabase
+    .from("reports")
+    .insert({ type: type || "ISSUE", subject, description, user_id: userId })
+    .select("id, type")
+    .single();
 
-  await logActivity({
-    userId,
-    type: "REPORT_SUBMITTED",
-    description: `Report submitted: ${subject}`,
-    ip,
-    userAgent,
-    metadata: { reportId: report.id, type: report.type },
-  });
+  if (report) {
+    await logActivity({
+      userId,
+      type: "REPORT_SUBMITTED",
+      description: `Report submitted: ${subject}`,
+      ip,
+      userAgent,
+      metadata: { reportId: report.id, type: report.type },
+    });
+  }
 
-  return NextResponse.json({ success: true, id: report.id });
+  return NextResponse.json({ success: true, id: report!.id });
 }
 
 export async function GET(req: NextRequest) {
@@ -40,27 +44,36 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  const { data: user } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
   const isAdmin = user && user.role !== "USER";
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
 
   if (isAdmin) {
-    const where = status ? { status } : {};
-    const reports = await prisma.report.findMany({
-      where,
-      include: { user: { select: { name: true, email: true } } },
-      orderBy: { createdAt: "desc" },
-    });
+    let query = supabase
+      .from("reports")
+      .select("*, user:users(name, email)")
+      .order("created_at", { ascending: false });
+
+    if (status) query = query.eq("status", status);
+
+    const { data: reports } = await query;
     return NextResponse.json({ reports });
   }
 
-  const where = status ? { status, userId } : { userId };
-  const reports = await prisma.report.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-  });
+  let query = supabase
+    .from("reports")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
+  if (status) query = query.eq("status", status);
+
+  const { data: reports } = await query;
   return NextResponse.json({ reports });
 }

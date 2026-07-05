@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function AdminOverviewPage() {
@@ -9,55 +9,51 @@ export default async function AdminOverviewPage() {
   const userId = (session?.user as { id?: string })?.id;
   if (!userId) redirect("/auth/login");
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const { data: user } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
 
   if (user?.role !== "ADMIN" && user?.role !== "SUPER_ADMIN") redirect("/dashboard");
 
-  const cloudflareConfigured = !!process.env.CLOUDFLARE_API_EMAIL && !!process.env.CLOUDFLARE_API_KEY && !!process.env.CLOUDFLARE_ZONE_ID;
+  const cloudflareConfigured = !!process.env.CLOUDFLARE_EMAIL && !!process.env.CLOUDFLARE_API_KEY && !!process.env.CLOUDFLARE_ZONE_ID;
 
   const [
-    totalUsers,
-    totalSubdomains,
-    totalRecords,
-    totalDomains,
-    reservedCount,
-    activeSubdomains,
-    suspendedSubdomains,
-    pendingSubdomains,
-    bannedUsers,
-    apiKeysCount,
-    recentUsers,
-    recentSubdomains,
-    recentActivity,
+    { count: totalUsers },
+    { count: totalSubdomains },
+    { count: totalRecords },
+    { count: totalDomains },
+    { count: reservedCount },
+    { count: activeSubdomains },
+    { count: suspendedSubdomains },
+    { count: pendingSubdomains },
+    { count: bannedUsers },
+    { data: recentUsers },
+    { data: recentSubdomains },
+    { data: recentActivity },
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.subdomain.count(),
-    prisma.dnsRecord.count(),
-    prisma.rootDomain.count(),
-    prisma.reservedName.count(),
-    prisma.subdomain.count({ where: { status: "ACTIVE" } }),
-    prisma.subdomain.count({ where: { status: "SUSPENDED" } }),
-    prisma.subdomain.count({ where: { status: "PENDING" } }),
-    prisma.user.count({ where: { isBanned: true } }),
-    prisma.apiKey.count(),
-    prisma.user.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
-    }),
-    prisma.subdomain.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      include: { user: { select: { email: true, name: true } } },
-    }),
-    prisma.activity.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      include: { user: { select: { name: true, email: true } } },
-    }),
+    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("subdomains").select("*", { count: "exact", head: true }),
+    supabase.from("dns_records").select("*", { count: "exact", head: true }),
+    supabase.from("root_domains").select("*", { count: "exact", head: true }),
+    supabase.from("reserved_names").select("*", { count: "exact", head: true }),
+    supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("status", "ACTIVE"),
+    supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("status", "SUSPENDED"),
+    supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
+    supabase.from("users").select("*", { count: "exact", head: true }).eq("is_banned", true),
+    supabase.from("users")
+      .select("id, name, email, role, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("subdomains")
+      .select("*, user:users(name, email)")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("activities")
+      .select("*, user:users(name, email)")
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
 
   return (
@@ -99,11 +95,11 @@ export default async function AdminOverviewPage() {
             <p className="text-3xl font-bold">{totalSubdomains}</p>
             <div className="mt-1 flex gap-2 text-xs text-neutral-500">
               <span className="text-emerald-500">{activeSubdomains} active</span>
-              {suspendedSubdomains > 0 && (
-                <span className="text-red-500">{suspendedSubdomains} suspended</span>
+              {(suspendedSubdomains ?? 0) > 0 && (
+                <span className="text-red-500">{suspendedSubdomains ?? 0} suspended</span>
               )}
-              {pendingSubdomains > 0 && (
-                <span className="text-amber-500">{pendingSubdomains} pending</span>
+              {(pendingSubdomains ?? 0) > 0 && (
+                <span className="text-amber-500">{pendingSubdomains ?? 0} pending</span>
               )}
             </div>
           </CardContent>
@@ -129,8 +125,8 @@ export default async function AdminOverviewPage() {
             <CardTitle className="text-sm font-medium text-neutral-500">API Keys</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{apiKeysCount}</p>
-            <p className="mt-1 text-xs text-neutral-500">{reservedCount} reserved names</p>
+            <p className="text-3xl font-bold">-</p>
+            <p className="mt-1 text-xs text-neutral-500">{reservedCount ?? 0} reserved names</p>
           </CardContent>
         </Card>
       </div>
@@ -141,11 +137,11 @@ export default async function AdminOverviewPage() {
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            {recentActivity.length === 0 ? (
+            {(recentActivity?.length ?? 0) === 0 ? (
               <p className="text-sm text-neutral-500">No recent activity</p>
             ) : (
               <div className="space-y-4">
-                {recentActivity.map((a: { id: string; description: string; createdAt: Date; user?: { name: string | null; email: string | null } | null }) => (
+                {recentActivity?.map((a: { id: string; description: string; created_at: string; user?: { name: string | null; email: string | null } | null }) => (
                   <div key={a.id} className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">{a.description}</p>
@@ -154,7 +150,7 @@ export default async function AdminOverviewPage() {
                       </p>
                     </div>
                     <span className="shrink-0 text-xs text-neutral-400">
-                      {new Date(a.createdAt).toLocaleString()}
+                      {new Date(a.created_at).toLocaleString()}
                     </span>
                   </div>
                 ))}
@@ -168,22 +164,22 @@ export default async function AdminOverviewPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Recent Users</CardTitle>
-                <span className="text-xs text-neutral-400">{totalUsers} total</span>
+                <span className="text-xs text-neutral-400">{totalUsers ?? 0} total</span>
               </div>
             </CardHeader>
             <CardContent>
-              {recentUsers.length === 0 ? (
+              {(recentUsers?.length ?? 0) === 0 ? (
                 <p className="text-sm text-neutral-500">No users yet</p>
               ) : (
                 <div className="space-y-3">
-                  {recentUsers.map((u: { id: string; name: string | null; email: string; role: string; createdAt: Date }) => (
+                  {recentUsers?.map((u: { id: string; name: string | null; email: string; role: string; created_at: string }) => (
                     <div key={u.id} className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{u.name || "Unnamed"}</p>
                         <p className="truncate text-xs text-neutral-500">{u.email}</p>
                       </div>
                       <span className="shrink-0 text-xs text-neutral-400">
-                        {new Date(u.createdAt).toLocaleDateString()}
+                        {new Date(u.created_at).toLocaleDateString()}
                       </span>
                     </div>
                   ))}
@@ -196,15 +192,15 @@ export default async function AdminOverviewPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Recent Subdomains</CardTitle>
-                <span className="text-xs text-neutral-400">{totalSubdomains} total</span>
+                <span className="text-xs text-neutral-400">{totalSubdomains ?? 0} total</span>
               </div>
             </CardHeader>
             <CardContent>
-              {recentSubdomains.length === 0 ? (
+              {(recentSubdomains?.length ?? 0) === 0 ? (
                 <p className="text-sm text-neutral-500">No subdomains yet</p>
               ) : (
                 <div className="space-y-3">
-                  {recentSubdomains.map((s: { id: string; name: string; domain: string; createdAt: Date; user?: { name: string | null; email: string | null } | null }) => (
+                  {recentSubdomains?.map((s: { id: string; name: string; domain: string; created_at: string; user?: { name: string | null; email: string | null } | null }) => (
                     <div key={s.id} className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-mono text-sm">
@@ -215,7 +211,7 @@ export default async function AdminOverviewPage() {
                         </p>
                       </div>
                       <span className="shrink-0 text-xs text-neutral-400">
-                        {new Date(s.createdAt).toLocaleDateString()}
+                        {new Date(s.created_at).toLocaleDateString()}
                       </span>
                     </div>
                   ))}

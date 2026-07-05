@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   try {
@@ -20,7 +20,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const { data: existing } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
     if (existing) {
       return NextResponse.json(
         { success: false, error: "Email already registered" },
@@ -30,19 +34,21 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await prisma.user.create({
-      data: {
+    const { data: user } = await supabase
+      .from("users")
+      .insert({
         name: name || email.split("@")[0],
         email,
         password: hashedPassword,
-      },
-    });
+      })
+      .select("id, email, name")
+      .single();
 
     return NextResponse.json(
       {
         success: true,
         message: "Account created successfully",
-        data: { id: user.id, email: user.email, name: user.name },
+        data: { id: user!.id, email: user!.email, name: user!.name },
       },
       { status: 201 }
     );

@@ -1,27 +1,31 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
-async function checkAdmin(req: Request) {
+async function checkAdmin() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string })?.id;
   if (!userId) return null;
-  const admin = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
   if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") return null;
   return userId;
 }
 
 export async function GET() {
-  const userId = await checkAdmin(new Request("http://localhost"));
+  const userId = await checkAdmin();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const domains = await prisma.rootDomain.findMany({ orderBy: { createdAt: "desc" } });
+  const { data: domains } = await supabase
+    .from("root_domains")
+    .select("*")
+    .order("created_at", { ascending: false });
   return NextResponse.json(domains);
 }
 
@@ -32,10 +36,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
 
   if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -47,14 +52,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Domain is required" }, { status: 400 });
   }
 
-  const rootDomain = await prisma.rootDomain.create({
-    data: {
+  const { data: rootDomain } = await supabase
+    .from("root_domains")
+    .insert({
       domain: body.domain,
-      zoneId: body.cloudflareZoneId ?? "",
-      isActive: body.active ?? true,
-      isDefault: body.default ?? false,
-    },
-  });
+      zone_id: body.cloudflareZoneId ?? "",
+      is_active: body.active ?? true,
+      is_default: body.default ?? false,
+    })
+    .select("*")
+    .single();
 
   return NextResponse.json(rootDomain, { status: 201 });
 }

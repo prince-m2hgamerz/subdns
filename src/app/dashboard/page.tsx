@@ -1,25 +1,28 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { Globe, Activity as ActivityIcon, Shield, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 async function getStats(userId: string) {
-  const [subdomainCount, activeCount, recordCount, recentActivity] = await Promise.all([
-    prisma.subdomain.count({ where: { userId } }),
-    prisma.subdomain.count({ where: { userId, status: "ACTIVE" } }),
-    prisma.dnsRecord.count({
-      where: { subdomain: { userId } },
-    }),
-    prisma.activity.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    }),
+  const [
+    { count: subdomainCount },
+    { count: activeCount },
+    { count: recordCount },
+    { data: recentActivity },
+  ] = await Promise.all([
+    supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("user_id", userId),
+    supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("status", "ACTIVE"),
+    supabase.from("dns_records").select("*, subdomain:subdomains!inner(user_id)", { count: "exact", head: true }).eq("subdomain.user_id", userId),
+    supabase.from("activities")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
 
-  return { subdomainCount, activeCount, recordCount, recentActivity };
+  return { subdomainCount: subdomainCount ?? 0, activeCount: activeCount ?? 0, recordCount: recordCount ?? 0, recentActivity: recentActivity ?? [] };
 }
 
 export default async function DashboardPage() {
@@ -89,23 +92,23 @@ export default async function DashboardPage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {stats.recentActivity.map((event: (typeof stats.recentActivity)[number]) => (
+              {stats.recentActivity.map((event: { id: string; type: string; metadata: unknown; created_at: string }) => (
                 <div
                   key={event.id}
                   className="flex items-center justify-between rounded-lg border border-border px-4 py-3"
                 >
                   <div>
                     <p className="text-sm font-medium">{event.type}</p>
-                    {event.metadata && (
+                    {event.metadata ? (
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {typeof event.metadata === "string"
                           ? event.metadata
                           : JSON.stringify(event.metadata).slice(0, 100)}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(event.createdAt).toLocaleDateString()}
+                    {new Date(event.created_at).toLocaleDateString()}
                   </span>
                 </div>
               ))}

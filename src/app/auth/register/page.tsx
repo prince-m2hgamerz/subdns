@@ -8,7 +8,7 @@ import { Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LiquidChrome } from "@/components/liquid-chrome";
+import { LiquidChrome } from "@/components/ui/liquid-chrome";
 
 export default function RegisterPage() {
   const router = useRouter();

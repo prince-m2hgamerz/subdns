@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { generateApiKey } from "@/lib/utils";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
@@ -10,11 +10,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const keys = await prisma.apiKey.findMany({
-    where: { userId },
-    select: { id: true, name: true, key: true, lastUsed: true, createdAt: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const { data: keys } = await supabase
+    .from("api_keys")
+    .select("id, name, key, last_used, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
   return NextResponse.json({ keys });
 }
@@ -32,17 +32,19 @@ export async function POST(req: NextRequest) {
 
   const key = `subdns_${generateApiKey()}`;
 
-  const apiKey = await prisma.apiKey.create({
-    data: { name, key, userId },
-  });
+  const { data: apiKey } = await supabase
+    .from("api_keys")
+    .insert({ name, key, user_id: userId })
+    .select("id, name, key")
+    .single();
 
   await logActivity({
     userId,
     event: "API_KEY_CREATED",
-    metadata: JSON.stringify({ keyId: apiKey.id, name }),
+    metadata: JSON.stringify({ keyId: apiKey!.id, name }),
     ip: req.headers.get("x-forwarded-for") || "",
     userAgent: req.headers.get("user-agent") || "",
   });
 
-  return NextResponse.json({ key: apiKey.key }, { status: 201 });
+  return NextResponse.json({ key: apiKey!.key }, { status: 201 });
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function PATCH(req: Request) {
   const session = await getServerSession(authOptions);
@@ -16,10 +16,10 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { name: name.trim() },
-  });
+  await supabase
+    .from("users")
+    .update({ name: name.trim() })
+    .eq("id", userId);
 
   return NextResponse.json({ success: true });
 }

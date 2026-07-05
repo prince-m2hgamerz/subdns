@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
-import { LiquidChrome } from "@/components/liquid-chrome";
+import { LiquidChrome } from "@/components/ui/liquid-chrome";
 
 const capabilities = [
   "Subdomains",
@@ -23,7 +23,7 @@ const headlineWords = [
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pt-32 pb-16 sm:pt-40 sm:pb-20 md:pt-48 md:pb-24">
+    <section className="relative min-h-screen overflow-hidden pt-32 pb-16 sm:pt-40 sm:pb-20 md:pt-48 md:pb-24">
       <div className="pointer-events-none absolute inset-0 select-none">
         <LiquidChrome
           baseColor={[0.1, 0.12, 0.18]}

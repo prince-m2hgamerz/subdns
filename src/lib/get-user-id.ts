@@ -1,19 +1,23 @@
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function getUserId(req: NextRequest): Promise<string | null> {
   const authHeader = req.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const key = authHeader.slice("Bearer ".length).trim();
-    const apiKey = await prisma.apiKey.findUnique({ where: { key } });
+    const { data: apiKey } = await supabase
+      .from("api_keys")
+      .select("*")
+      .eq("key", key)
+      .single();
     if (apiKey) {
-      await prisma.apiKey.update({
-        where: { id: apiKey.id },
-        data: { lastUsed: new Date() },
-      });
-      return apiKey.userId;
+      await supabase
+        .from("api_keys")
+        .update({ last_used: new Date().toISOString() })
+        .eq("id", apiKey.id);
+      return apiKey.user_id;
     }
     return null;
   }
