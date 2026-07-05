@@ -1,0 +1,23 @@
+<!-- Feature card illustration: "Ship From the Terminal"
+     A terminal window mockup with a CLI command, its result, and a blinking cursor. -->
+<svg viewBox="0 0 480 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Terminal window showing a command line creating a subdomain">
+  <rect width="480" height="300" rx="12" fill="#0A0A0A" />
+  <rect x="0.5" y="0.5" width="479" height="299" rx="11.5" fill="none" stroke="rgba(255,255,255,0.08)" />
+
+  <g transform="translate(50,70)">
+    <rect width="380" height="180" rx="10" fill="#111111" stroke="rgba(255,255,255,0.1)" />
+    <path d="M 0 10 C 0 4.5 4.5 0 10 0 L 370 0 C 375.5 0 380 4.5 380 10 L 380 32 L 0 32 Z" fill="#161616" />
+    <line x1="0" y1="32" x2="380" y2="32" stroke="rgba(255,255,255,0.08)" />
+    <circle cx="20" cy="16" r="4.5" fill="#3A3A3A" />
+    <circle cx="36" cy="16" r="4.5" fill="#3A3A3A" />
+    <circle cx="52" cy="16" r="4.5" fill="#3A3A3A" />
+
+    <text x="20" y="62" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="15" fill="#888888">$ <tspan fill="#FFFFFF">subdns create myapp</tspan></text>
+    <text x="20" y="94" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="15" fill="#378ADD">&#8594; myapp.m2hio.in</text>
+    <text x="20" y="122" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="14" fill="#1E9E63">resolved &#183; ssl active</text>
+
+    <text x="20" y="154" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="15" fill="#888888">$</text>
+    <rect x="34" y="142" width="9" height="16" fill="#FFFFFF" opacity="0.8" />
+  </g>
+</svg>

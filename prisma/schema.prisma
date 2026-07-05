@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum SubdomainStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum DnsRecordType {
+  A
+  AAAA
+  CNAME
+  TXT
+  MX
+  SRV
+  CAA
+}
+
+enum DnsRecordStatus {
+  ACTIVE
+  PENDING
+  FAILED
+}
+
+enum ActivityType {
+  DNS_CREATED
+  DNS_DELETED
+  DNS_UPDATED
+  SUBDOMAIN_CREATED
+  SUBDOMAIN_DELETED
+  SUBDOMAIN_UPDATED
+  LOGIN
+  LOGOUT
+  REGISTER
+  API_REQUEST
+  API_KEY_CREATED
+  API_KEY_DELETED
+  SECURITY_EVENT
+  PROXY_ENABLED
+  PROXY_DISABLED
+  CONTACT_SENT
+  REPORT_SUBMITTED
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String?
+  email           String    @unique
+  emailVerified   DateTime?
+  image           String?
+  password        String?
+  role            UserRole  @default(USER)
+  isActive        Boolean   @default(true)
+  isBanned        Boolean   @default(false)
+  maxSubdomains   Int       @default(10)
+  maxDnsRecords   Int       @default(50)
+  apiKey          String?   @unique
+  favoriteDomains String[]  @default([])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  subdomains      Subdomain[]
+  activities      Activity[]
+  apiKeys         ApiKey[]
+  contactMessages ContactMessage[]
+  reports         Report[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Subdomain {
+  id           String           @id @default(cuid())
+  name         String
+  domain       String           @default("m2hio.in")
+  fullDomain   String
+  target       String?
+  type         String           @default("CNAME")
+  status       SubdomainStatus  @default(ACTIVE)
+  proxied      Boolean          @default(true)
+  cloudflareId String?
+  sslStatus    String?          @default("pending")
+  dnsStatus    String?          @default("pending")
+  isFavorite   Boolean          @default(false)
+  userId       String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dnsRecords DnsRecord[]
+  activities Activity[]
+
+  @@unique([name, domain])
+  @@map("subdomains")
+}
+
+model DnsRecord {
+  id           String           @id @default(cuid())
+  type         DnsRecordType
+  name         String
+  content      String
+  ttl          Int              @default(1)
+  proxied      Boolean          @default(false)
+  priority     Int?
+  status       DnsRecordStatus  @default(ACTIVE)
+  cloudflareId String?
+  subdomainId  String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  subdomain Subdomain @relation(fields: [subdomainId], references: [id], onDelete: Cascade)
+
+  @@map("dns_records")
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  description String
+  ip          String?
+  userAgent   String?
+  metadata    Json?
+  userId      String?
+  subdomainId String?
+  createdAt   DateTime     @default(now())
+
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  subdomain Subdomain? @relation(fields: [subdomainId], references: [id], onDelete: SetNull)
+
+  @@map("activities")
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  name      String
+  key       String   @unique
+  lastUsed  DateTime?
+  expiresAt DateTime?
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+model ReservedName {
+  id   String @id @default(cuid())
+  name String @unique
+
+  @@map("reserved_names")
+}
+
+model RootDomain {
+  id        String   @id @default(cuid())
+  domain    String   @unique
+  zoneId    String
+  isActive  Boolean  @default(true)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("root_domains")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  status    String   @default("UNREAD")
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contact_messages")
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  type        String   @default("ISSUE")
+  subject     String
+  description String   @db.Text
+  status      String   @default("OPEN")
+  priority    String   @default("MEDIUM")
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("reports")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  String @default("string")
+
+  @@map("settings")
+}

@@ -1,0 +1,7 @@
+{
+  "siteName": "SubDNS",
+  "siteDescription": "Subdomain Management Platform",
+  "registrationOpen": "true",
+  "defaultSubdomainLimit": "10",
+  "maxSubdomainLength": "63"
+}

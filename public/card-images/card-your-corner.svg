@@ -1,0 +1,30 @@
+<!-- Feature card illustration: "Your Corner, Instantly"
+     Dark card background matching the site's design tokens, with a mock
+     address bar showing a claimed subdomain and a "resolved" pulse dot. -->
+<svg viewBox="0 0 480 300" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Address bar showing a claimed subdomain, marked as resolved">
+  <rect width="480" height="300" rx="12" fill="#0A0A0A" />
+  <rect x="0.5" y="0.5" width="479" height="299" rx="11.5" fill="none" stroke="rgba(255,255,255,0.08)" />
+
+  <g opacity="0.05" stroke="#FFFFFF" stroke-width="1">
+    <line x1="0" y1="90" x2="480" y2="90" />
+    <line x1="0" y1="210" x2="480" y2="210" />
+  </g>
+
+  <g transform="translate(60,122)">
+    <rect width="360" height="56" rx="10" fill="#151515" stroke="rgba(255,255,255,0.1)" />
+    <circle cx="24" cy="28" r="3.5" fill="#3A3A3A" />
+    <circle cx="38" cy="28" r="3.5" fill="#3A3A3A" />
+    <circle cx="52" cy="28" r="3.5" fill="#3A3A3A" />
+    <line x1="70" y1="12" x2="70" y2="44" stroke="rgba(255,255,255,0.1)" />
+
+    <text x="88" y="34" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="17" fill="#FFFFFF">yourname</text>
+    <text x="176" y="34" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="17" fill="#888888">.m2hio.in</text>
+    <rect x="248" y="20" width="2" height="16" fill="#FFFFFF" opacity="0.6" />
+
+    <circle cx="332" cy="28" r="9" fill="rgba(30,158,99,0.15)" />
+    <circle cx="332" cy="28" r="4.5" fill="#1E9E63" />
+  </g>
+
+  <text x="240" y="222" text-anchor="middle" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="13" fill="#1E9E63">resolved in 340ms</text>
+</svg>

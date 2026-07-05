@@ -1,0 +1,32 @@
+{
+  "name": "@subdns/cli",
+  "version": "0.1.0",
+  "description": "CLI for SubDNS — claim your corner of the internet, manage subdomains and DNS records from the terminal.",
+  "bin": {
+    "subdns": "dist/index.js"
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "subdns",
+    "dns",
+    "subdomain",
+    "cli"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "conf": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "typescript": "^5.8.3"
+  }
+}
