@@ -176,7 +176,7 @@ export default async function AdminOverviewPage() {
                 <p className="text-sm text-neutral-500">No users yet</p>
               ) : (
                 <div className="space-y-3">
-                  {recentUsers.map((u) => (
+                  {recentUsers.map((u: { id: string; name: string | null; email: string; role: string; createdAt: Date }) => (
                     <div key={u.id} className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{u.name || "Unnamed"}</p>
@@ -204,7 +204,7 @@ export default async function AdminOverviewPage() {
                 <p className="text-sm text-neutral-500">No subdomains yet</p>
               ) : (
                 <div className="space-y-3">
-                  {recentSubdomains.map((s) => (
+                  {recentSubdomains.map((s: { id: string; name: string; domain: string; createdAt: Date; user?: { name: string | null; email: string | null } | null }) => (
                     <div key={s.id} className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-mono text-sm">
