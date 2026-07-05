@@ -31,7 +31,15 @@ export async function GET() {
         .from("subdomains")
         .select("*", { count: "exact", head: true })
         .eq("user_id", u.id);
-      return { ...u, _count: { subdomains: count ?? 0 } };
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        isBanned: u.is_banned,
+        createdAt: u.created_at,
+        _count: { subdomains: count ?? 0 },
+      };
     })
   );
 

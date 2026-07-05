@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { getUserId } from "@/lib/get-user-id";
+import { camelCaseKeys } from "@/lib/transform";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     .range(offset, offset + limit - 1);
 
   return NextResponse.json({
-    activities,
+    activities: camelCaseKeys(activities),
     pagination: {
       page,
       limit,

@@ -9,17 +9,18 @@ interface CfResponse<T> {
 
 async function cfFetch<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  zoneId?: string
 ): Promise<CfResponse<T>> {
-  const zoneId = process.env.CLOUDFLARE_ZONE_ID;
+  const zone = zoneId || process.env.CLOUDFLARE_ZONE_ID;
   const email = process.env.CLOUDFLARE_API_EMAIL;
   const key = process.env.CLOUDFLARE_API_KEY;
 
-  if (!email || !key || !zoneId) {
+  if (!email || !key || !zone) {
     throw new Error("Cloudflare credentials not configured");
   }
 
-  const url = `${CF_API}${path.startsWith("/") ? "" : "/zones/"}${zoneId}${path.startsWith("/") ? path : `/${path}`}`;
+  const url = `${CF_API}${path.startsWith("/") ? "" : "/zones/"}${zone}${path.startsWith("/") ? path : `/${path}`}`;
 
   const res = await fetch(url, {
     ...options,
@@ -61,11 +62,11 @@ export async function createDnsRecord(params: {
   ttl?: number;
   proxied?: boolean;
   priority?: number;
-}) {
+}, zoneId?: string) {
   return cfFetch<DnsRecord>("dns_records", {
     method: "POST",
     body: JSON.stringify(params),
-  });
+  }, zoneId);
 }
 
 export async function updateDnsRecord(
@@ -77,18 +78,19 @@ export async function updateDnsRecord(
     ttl?: number;
     proxied?: boolean;
     priority?: number;
-  }
+  },
+  zoneId?: string
 ) {
   return cfFetch<DnsRecord>(`dns_records/${recordId}`, {
     method: "PATCH",
     body: JSON.stringify(params),
-  });
+  }, zoneId);
 }
 
-export async function deleteDnsRecord(recordId: string) {
+export async function deleteDnsRecord(recordId: string, zoneId?: string) {
   return cfFetch<{ id: string }>(`dns_records/${recordId}`, {
     method: "DELETE",
-  });
+  }, zoneId);
 }
 
 export async function listDnsRecords(params?: {
@@ -96,7 +98,7 @@ export async function listDnsRecords(params?: {
   name?: string;
   page?: number;
   per_page?: number;
-}) {
+}, zoneId?: string) {
   const query = new URLSearchParams();
   if (params?.type) query.set("type", params.type);
   if (params?.name) query.set("name", params.name);
@@ -104,20 +106,21 @@ export async function listDnsRecords(params?: {
   if (params?.per_page) query.set("per_page", params.per_page.toString());
 
   const qs = query.toString();
-  return cfFetch<DnsRecord[]>(`dns_records${qs ? `?${qs}` : ""}`);
+  return cfFetch<DnsRecord[]>(`dns_records${qs ? `?${qs}` : ""}`, {}, zoneId);
 }
 
-export async function getDnsRecord(recordId: string) {
-  return cfFetch<DnsRecord>(`dns_records/${recordId}`);
+export async function getDnsRecord(recordId: string, zoneId?: string) {
+  return cfFetch<DnsRecord>(`dns_records/${recordId}`, {}, zoneId);
 }
 
 export async function detectDuplicateRecords(
   type: string,
   name: string,
-  content: string
+  content: string,
+  zoneId?: string
 ): Promise<boolean> {
   try {
-    const records = await listDnsRecords({ type, name });
+    const records = await listDnsRecords({ type, name }, zoneId);
     return records.result.some(
       (r) => r.type === type && r.name === name && r.content === content
     );

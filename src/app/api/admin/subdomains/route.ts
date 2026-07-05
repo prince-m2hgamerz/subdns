@@ -41,5 +41,22 @@ export async function GET(req: NextRequest) {
 
   const { data: subdomains } = await query;
 
-  return NextResponse.json(subdomains);
+  const mapped = await Promise.all(
+    (subdomains ?? []).map(async ({ created_at, cloudflare_id, full_domain, user_id, ...rest }) => {
+      const { count } = await supabase
+        .from("dns_records")
+        .select("*", { count: "exact", head: true })
+        .eq("subdomain_id", rest.id);
+      return {
+        ...rest,
+        fullDomain: full_domain,
+        cloudflareId: cloudflare_id,
+        userId: user_id,
+        createdAt: created_at,
+        _count: { dnsRecords: count ?? 0 },
+      };
+    })
+  );
+
+  return NextResponse.json(mapped);
 }

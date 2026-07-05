@@ -41,7 +41,19 @@ export async function PATCH(
     .select("*, user:users(email, name)")
     .single();
 
-  return NextResponse.json(subdomain);
+  if (!subdomain) {
+    return NextResponse.json({ error: "Subdomain not found" }, { status: 404 });
+  }
+
+  const { created_at, cloudflare_id, full_domain, user_id, ...rest } = subdomain;
+
+  return NextResponse.json({
+    ...rest,
+    fullDomain: full_domain,
+    cloudflareId: cloudflare_id,
+    userId: user_id,
+    createdAt: created_at,
+  });
 }
 
 export async function DELETE(

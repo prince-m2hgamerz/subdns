@@ -92,8 +92,8 @@ export function Footer() {
   return (
     <footer className="border-t border-border">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-10 sm:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12">
-          <div className="sm:col-span-6 lg:col-span-2 xl:col-span-2">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 sm:gap-10">
+          <div className="col-span-2 sm:col-span-6 lg:col-span-2 xl:col-span-2">
             <Link href="/" className="group inline-flex items-center gap-2.5 transition-all duration-200 hover:opacity-80">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-gray-100 transition-all duration-200 group-hover:border-gray-alpha-400">
                 <Terminal className="h-4 w-4" />

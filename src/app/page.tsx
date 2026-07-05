@@ -4,6 +4,8 @@ import { Features } from "@/components/landing/features";
 import { TerminalDemo } from "@/components/landing/terminal-demo";
 import { RecentlyShipped } from "@/components/landing/recently-shipped";
 import { Stats } from "@/components/landing/stats";
+import { EmailCapture } from "@/components/landing/email-capture";
+import { SocialProof } from "@/components/landing/social-proof";
 import { Footer } from "@/components/landing/footer";
 
 export default function Home() {
@@ -15,6 +17,8 @@ export default function Home() {
       <TerminalDemo />
       <RecentlyShipped />
       <Stats />
+      <SocialProof />
+      <EmailCapture />
       <Footer />
     </>
   );

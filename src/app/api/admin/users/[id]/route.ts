@@ -46,5 +46,13 @@ export async function PATCH(
     .select("*", { count: "exact", head: true })
     .eq("user_id", id);
 
-  return NextResponse.json({ ...user, _count: { subdomains: count ?? 0 } });
+  return NextResponse.json({
+    id: user?.id,
+    name: user?.name,
+    email: user?.email,
+    role: user?.role,
+    isBanned: user?.is_banned,
+    createdAt: user?.created_at,
+    _count: { subdomains: count ?? 0 },
+  });
 }

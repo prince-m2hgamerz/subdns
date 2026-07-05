@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { camelCaseKeys } from "@/lib/transform";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -25,7 +26,7 @@ export async function GET() {
     .select("*")
     .order("name", { ascending: true });
 
-  return NextResponse.json(reserved);
+  return NextResponse.json(camelCaseKeys(reserved));
 }
 
 export async function POST(req: NextRequest) {

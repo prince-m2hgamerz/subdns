@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { updateDnsRecord, deleteDnsRecord } from "@/lib/cloudflare";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
+import { camelCaseKeys } from "@/lib/transform";
 
 export async function GET(
   req: NextRequest,
@@ -26,7 +27,7 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ subdomain });
+  return NextResponse.json({ subdomain: camelCaseKeys(subdomain) });
 }
 
 export async function PATCH(
@@ -82,7 +83,7 @@ export async function PATCH(
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
 
-    return NextResponse.json({ subdomain: updated });
+    return NextResponse.json({ subdomain: camelCaseKeys(updated) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update subdomain";
     return NextResponse.json({ error: message }, { status: 500 });

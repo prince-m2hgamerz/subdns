@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { getSettings } from "@/lib/settings-store";
+import { getSettings, updateSetting } from "@/lib/settings-store";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -25,9 +25,12 @@ export async function GET() {
 
   const settings = {
     ...fileSettings,
-    cloudflareEmail: process.env.CLOUDFLARE_EMAIL ?? "",
+    registrationOpen: fileSettings.registrationOpen === "true",
+    defaultSubdomainLimit: parseInt(fileSettings.defaultSubdomainLimit ?? "10"),
+    maxSubdomainLength: parseInt(fileSettings.maxSubdomainLength ?? "63"),
+    cloudflareEmail: process.env.CLOUDFLARE_API_EMAIL ?? "",
     cloudflareZoneId: process.env.CLOUDFLARE_ZONE_ID ?? "",
-    cloudflareConfigured: !!(process.env.CLOUDFLARE_EMAIL && process.env.CLOUDFLARE_API_KEY),
+    cloudflareConfigured: !!(process.env.CLOUDFLARE_API_EMAIL && process.env.CLOUDFLARE_API_KEY),
   };
 
   return NextResponse.json({ settings });
@@ -50,26 +53,33 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const fileSettings = await getSettings();
+  const { key, value } = await req.json();
 
-  for (const key of Object.keys(body)) {
-    if (key === "cloudflareEmail" || key === "cloudflareZoneId" || key === "cloudflareConfigured") {
-      continue;
-    }
-    fileSettings[key] = String(body[key]);
+  if (!key || ["cloudflareEmail", "cloudflareZoneId", "cloudflareConfigured"].includes(key)) {
+    const fileSettings = await getSettings();
+    return NextResponse.json({
+      settings: {
+        ...fileSettings,
+        registrationOpen: fileSettings.registrationOpen === "true",
+        defaultSubdomainLimit: parseInt(fileSettings.defaultSubdomainLimit ?? "10"),
+        maxSubdomainLength: parseInt(fileSettings.maxSubdomainLength ?? "63"),
+        cloudflareEmail: process.env.CLOUDFLARE_API_EMAIL ?? "",
+        cloudflareZoneId: process.env.CLOUDFLARE_ZONE_ID ?? "",
+        cloudflareConfigured: !!(process.env.CLOUDFLARE_API_EMAIL && process.env.CLOUDFLARE_API_KEY),
+      },
+    });
   }
 
-  const fs = await import("fs/promises");
-  const path = await import("path");
-  const settingsFile = path.default.join(process.cwd(), "data", "settings.json");
-  await fs.writeFile(settingsFile, JSON.stringify(fileSettings, null, 2), "utf-8");
+  const fileSettings = await updateSetting(key, String(value));
 
   const settings = {
     ...fileSettings,
-    cloudflareEmail: process.env.CLOUDFLARE_EMAIL ?? "",
+    registrationOpen: fileSettings.registrationOpen === "true",
+    defaultSubdomainLimit: parseInt(fileSettings.defaultSubdomainLimit ?? "10"),
+    maxSubdomainLength: parseInt(fileSettings.maxSubdomainLength ?? "63"),
+    cloudflareEmail: process.env.CLOUDFLARE_API_EMAIL ?? "",
     cloudflareZoneId: process.env.CLOUDFLARE_ZONE_ID ?? "",
-    cloudflareConfigured: !!(process.env.CLOUDFLARE_EMAIL && process.env.CLOUDFLARE_API_KEY),
+    cloudflareConfigured: !!(process.env.CLOUDFLARE_API_EMAIL && process.env.CLOUDFLARE_API_KEY),
   };
 
   return NextResponse.json({ settings });

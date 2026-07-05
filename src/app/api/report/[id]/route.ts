@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { getUserId } from "@/lib/get-user-id";
+import { camelCaseKeys } from "@/lib/transform";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getUserId(req);
@@ -41,5 +42,5 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .select("*")
     .single();
 
-  return NextResponse.json({ report: updated });
+  return NextResponse.json({ report: camelCaseKeys(updated) });
 }

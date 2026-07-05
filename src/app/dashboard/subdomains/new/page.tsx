@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -14,8 +14,22 @@ export default function NewSubdomainPage() {
   const [target, setTarget] = useState("");
   const [type, setType] = useState("CNAME");
   const [proxied, setProxied] = useState(false);
+  const [domain, setDomain] = useState("");
+  const [availableDomains, setAvailableDomains] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/domains")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.domains?.length) {
+          setAvailableDomains(data.domains);
+          setDomain(data.domains[0]);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,13 +40,18 @@ export default function NewSubdomainPage() {
       return;
     }
 
+    if (!domain) {
+      setError("No root domains available");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch("/api/subdomains", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, target, type, proxied }),
+        body: JSON.stringify({ name, target, type, proxied, domain }),
       });
 
       const data = await res.json();
@@ -61,7 +80,7 @@ export default function NewSubdomainPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">New Subdomain</h1>
-          <p className="text-sm text-muted-foreground">Claim a free subdomain on m2hio.in</p>
+          <p className="text-sm text-muted-foreground">Claim a free subdomain</p>
         </div>
       </div>
 
@@ -78,6 +97,25 @@ export default function NewSubdomainPage() {
             )}
 
             <div className="space-y-2">
+              <label className="text-sm font-medium">Root Domain</label>
+              <select
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                required
+              >
+                {availableDomains.length === 0 && (
+                  <option value="">Loading...</option>
+                )}
+                {availableDomains.map((d) => (
+                  <option key={d} value={d}>
+                    .{d}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm font-medium">Subdomain</label>
               <div className="flex items-center gap-2">
                 <Input
@@ -87,7 +125,7 @@ export default function NewSubdomainPage() {
                   required
                   className="font-mono"
                 />
-                <span className="shrink-0 text-sm text-muted-foreground">.m2hio.in</span>
+                <span className="shrink-0 text-sm text-muted-foreground">.{domain || "..."}</span>
               </div>
             </div>
 

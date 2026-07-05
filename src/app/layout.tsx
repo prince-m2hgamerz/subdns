@@ -38,9 +38,39 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "SubDNS",
+        url: "https://subdns.m2hio.in",
+        description: "Free subdomains for developers on m2hio.in",
+      },
+      {
+        "@type": "WebSite",
+        name: "SubDNS",
+        url: "https://subdns.m2hio.in",
+        description: "Free subdomains for developers — instant DNS, Cloudflare proxy, and CLI automation.",
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: "SubDNS CLI",
+        url: "https://subdns.m2hio.in",
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "Cross-platform",
+        offers: { "@type": "Offer", price: "0" },
+      },
+    ],
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <Providers>
           <SmoothScroll>
             {children}

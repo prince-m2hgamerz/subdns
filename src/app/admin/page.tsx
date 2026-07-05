@@ -17,7 +17,7 @@ export default async function AdminOverviewPage() {
 
   if (user?.role !== "ADMIN" && user?.role !== "SUPER_ADMIN") redirect("/dashboard");
 
-  const cloudflareConfigured = !!process.env.CLOUDFLARE_EMAIL && !!process.env.CLOUDFLARE_API_KEY && !!process.env.CLOUDFLARE_ZONE_ID;
+  const cloudflareConfigured = !!process.env.CLOUDFLARE_API_EMAIL && !!process.env.CLOUDFLARE_API_KEY && !!process.env.CLOUDFLARE_ZONE_ID;
 
   const [
     { count: totalUsers },

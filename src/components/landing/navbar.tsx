@@ -17,6 +17,7 @@ const products = [
 
 const resources = [
   { label: "Documentation", href: "/docs", desc: "Guides, CLI docs, and API reference" },
+  { label: "Blog", href: "/blog", desc: "News, guides, and product updates" },
   { label: "GitHub", href: "https://github.com", desc: "Open source, contributions, and ideas", external: true },
   { label: "Status", href: "/status", desc: "Real-time service status" },
   { label: "Changelog", href: "/changelog", desc: "What's new and what's changed" },
@@ -50,7 +51,7 @@ function Dropdown({
       <button
         onClick={onToggle}
         className={cn(
-          "group flex items-center gap-1 rounded-lg px-3 py-2 text-sm transition-all duration-200",
+          "group flex cursor-pointer items-center gap-1 rounded-lg px-3 py-2 text-sm transition-all duration-200",
           open
             ? "text-foreground bg-gray-100"
             : "text-muted-foreground hover:text-foreground hover:bg-gray-100"
@@ -70,7 +71,7 @@ function Dropdown({
               href={item.href}
               onClick={onClose}
               className={cn(
-                "group flex items-center gap-3 rounded px-3 py-2.5 text-sm transition-all duration-200 hover:bg-gray-100",
+                "group flex cursor-pointer items-center gap-3 rounded px-3 py-2.5 text-sm transition-all duration-200 hover:bg-gray-100",
                 item.external ? "justify-between" : ""
               )}
               {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
@@ -142,21 +143,28 @@ export function Navbar() {
             />
             <Link
               href="/enterprise"
-              className="group relative rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
+              className="group relative cursor-pointer rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
             >
               Enterprise
               <span className="absolute bottom-1 left-3 h-px w-[calc(100%-1.5rem)] scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
             </Link>
             <Link
+              href="/about"
+              className="group relative cursor-pointer rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
+            >
+              About
+              <span className="absolute bottom-1 left-3 h-px w-[calc(100%-1.5rem)] scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
+            </Link>
+            <Link
               href="/pricing"
-              className="group relative rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
+              className="group relative cursor-pointer rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
             >
               Pricing
               <span className="absolute bottom-1 left-3 h-px w-[calc(100%-1.5rem)] scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
             </Link>
             <Link
               href="/contact"
-              className="group relative rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
+              className="group relative cursor-pointer rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
             >
               Contact
               <span className="absolute bottom-1 left-3 h-px w-[calc(100%-1.5rem)] scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
@@ -194,7 +202,7 @@ export function Navbar() {
 
         <button
           onClick={() => setOpen(!open)}
-          className="flex items-center rounded-lg p-2 hover:bg-gray-100 md:hidden"
+          className="flex cursor-pointer items-center rounded-lg p-2 hover:bg-gray-100 md:hidden"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -212,7 +220,7 @@ export function Navbar() {
               key={item.label}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+              className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
             >
               {item.label}
             </Link>
@@ -222,29 +230,43 @@ export function Navbar() {
               key={item.label}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+              className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
             >
               {item.label}
             </Link>
           ))}
           <Link
+            href="/about"
+            onClick={() => setOpen(false)}
+            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+          >
+            About
+          </Link>
+          <Link
+            href="/blog"
+            onClick={() => setOpen(false)}
+            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+          >
+            Blog
+          </Link>
+          <Link
             href="/enterprise"
             onClick={() => setOpen(false)}
-            className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
           >
             Enterprise
           </Link>
           <Link
             href="/pricing"
             onClick={() => setOpen(false)}
-            className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
           >
             Pricing
           </Link>
           <Link
             href="/contact"
             onClick={() => setOpen(false)}
-            className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
           >
             Contact
           </Link>

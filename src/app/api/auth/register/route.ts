@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const { data: user } = await supabase
+    const { data: user, error: insertError } = await supabase
       .from("users")
       .insert({
         name: name || email.split("@")[0],
@@ -44,18 +44,26 @@ export async function POST(req: Request) {
       .select("id, email, name")
       .single();
 
+    if (insertError || !user) {
+      console.error("Supabase insert error:", insertError);
+      return NextResponse.json(
+        { success: false, error: insertError?.message || "Failed to create user" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       {
         success: true,
         message: "Account created successfully",
-        data: { id: user!.id, email: user!.email, name: user!.name },
+        data: { id: user.id, email: user.email, name: user.name },
       },
       { status: 201 }
     );
-  } catch (error) {
-    console.error("Registration error:", error);
+  } catch (error: any) {
+    console.error("Registration error:", error?.message || error, error?.stack);
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
+      { success: false, error: error?.message || "Internal server error", detail: error?.stack?.split('\n')?.[0] },
       { status: 500 }
     );
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
+import { camelCaseKeys } from "@/lib/transform";
 
 export async function POST(req: NextRequest) {
   const { name, email, subject, message } = await req.json();
@@ -61,5 +62,5 @@ export async function GET(req: NextRequest) {
 
   const { data: messages } = await query;
 
-  return NextResponse.json({ messages });
+  return NextResponse.json({ messages: camelCaseKeys(messages) });
 }

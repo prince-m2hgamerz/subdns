@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LiquidChrome } from "@/components/ui/liquid-chrome";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,16 +46,13 @@ export default function RegisterPage() {
         return;
       }
 
-      const result = await signIn("credentials", {
+      await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
-      if (result?.ok) {
-        router.push("/dashboard");
-        router.refresh();
-      }
+      window.location.href = "/dashboard";
     } catch {
       setError("An unexpected error occurred");
     } finally {

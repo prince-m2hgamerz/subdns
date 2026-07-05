@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { createDnsRecord, detectDuplicateRecords } from "@/lib/cloudflare";
+import { createDnsRecord, detectDuplicateRecords, validateDnsRecord } from "@/lib/cloudflare";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
+import { camelCaseKeys } from "@/lib/transform";
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId(req);
@@ -19,7 +20,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { validateDnsRecord } = await import("@/lib/cloudflare");
   const validation = await validateDnsRecord(type, content);
   if (!validation.valid) {
     return NextResponse.json(
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
 
-    return NextResponse.json({ record }, { status: 201 });
+    return NextResponse.json({ record: camelCaseKeys(record) }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create DNS record";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -12,4 +12,13 @@ export function clearApiKey() {
 export function getBaseUrl() {
     return process.env.SUBDNS_API_URL ?? store.get("baseUrl") ?? "https://subdns.m2hio.in";
 }
+export function setBaseUrl(url) {
+    store.set("baseUrl", url);
+}
+export function getAllConfig() {
+    return store.store;
+}
+export function getConfig(key) {
+    return store.get(key);
+}
 //# sourceMappingURL=config.js.map

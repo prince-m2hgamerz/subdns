@@ -17,3 +17,15 @@ export function clearApiKey(): void {
 export function getBaseUrl(): string {
   return process.env.SUBDNS_API_URL ?? (store.get("baseUrl") as string) ?? "https://subdns.m2hio.in";
 }
+
+export function setBaseUrl(url: string): void {
+  store.set("baseUrl", url);
+}
+
+export function getAllConfig(): Record<string, unknown> {
+  return store.store as Record<string, unknown>;
+}
+
+export function getConfig(key: string): unknown {
+  return store.get(key);
+}

@@ -26,7 +26,16 @@ export async function GET() {
     .from("root_domains")
     .select("*")
     .order("created_at", { ascending: false });
-  return NextResponse.json(domains);
+  return NextResponse.json(
+    (domains ?? []).map((d: Record<string, unknown>) => ({
+      id: d.id,
+      domain: d.domain,
+      zoneId: d.zone_id,
+      isActive: d.is_active,
+      isDefault: d.is_default,
+      createdAt: d.created_at,
+    }))
+  );
 }
 
 export async function POST(req: Request) {
@@ -63,5 +72,15 @@ export async function POST(req: Request) {
     .select("*")
     .single();
 
-  return NextResponse.json(rootDomain, { status: 201 });
+  return NextResponse.json(
+    {
+      id: rootDomain?.id,
+      domain: rootDomain?.domain,
+      zoneId: rootDomain?.zone_id,
+      isActive: rootDomain?.is_active,
+      isDefault: rootDomain?.is_default,
+      createdAt: rootDomain?.created_at,
+    },
+    { status: 201 }
+  );
 }

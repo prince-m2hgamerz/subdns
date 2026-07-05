@@ -4,6 +4,7 @@ import { createDnsRecord } from "@/lib/cloudflare";
 import { logActivity } from "@/lib/activity";
 import { isValidSubdomain, isReservedName } from "@/lib/utils";
 import { getUserId } from "@/lib/get-user-id";
+import { camelCaseKeys } from "@/lib/transform";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  return NextResponse.json({ subdomains });
+  return NextResponse.json({ subdomains: camelCaseKeys(subdomains) });
 }
 
 export async function POST(req: NextRequest) {
@@ -26,10 +27,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, target, type = "CNAME", proxied = false } = await req.json();
+  const { name, target, type = "CNAME", proxied = false, domain } = await req.json();
 
   if (!name || !target) {
     return NextResponse.json({ error: "Name and target are required" }, { status: 400 });
+  }
+
+  if (!domain) {
+    return NextResponse.json({ error: "Domain selection is required" }, { status: 400 });
+  }
+
+  const { data: rootDomain } = await supabase
+    .from("root_domains")
+    .select("domain, zone_id, is_active")
+    .eq("domain", domain)
+    .maybeSingle();
+
+  if (!rootDomain) {
+    return NextResponse.json({ error: "Selected root domain not found" }, { status: 404 });
+  }
+
+  if (!rootDomain.is_active) {
+    return NextResponse.json({ error: "Selected root domain is not active" }, { status: 400 });
   }
 
   if (!isValidSubdomain(name)) {
@@ -47,7 +66,7 @@ export async function POST(req: NextRequest) {
     .from("subdomains")
     .select("id")
     .eq("name", name)
-    .eq("domain", "m2hio.in")
+    .eq("domain", domain)
     .maybeSingle();
 
   if (existing) {
@@ -73,6 +92,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const zoneId = rootDomain.zone_id || undefined;
+
   try {
     const cfRecord = await createDnsRecord({
       type,
@@ -80,14 +101,14 @@ export async function POST(req: NextRequest) {
       content: target,
       proxied,
       ttl: 1,
-    });
+    }, zoneId);
 
     const { data: subdomain } = await supabase
       .from("subdomains")
       .insert({
         name,
-        domain: "m2hio.in",
-        full_domain: `${name}.m2hio.in`,
+        domain,
+        full_domain: `${name}.${domain}`,
         target,
         type,
         proxied,
@@ -101,12 +122,12 @@ export async function POST(req: NextRequest) {
     await logActivity({
       userId,
       event: "SUBDOMAIN_CREATED",
-      metadata: { name, domain: "m2hio.in", target, type, proxied },
+      metadata: { name, domain, target, type, proxied },
       ip: req.headers.get("x-forwarded-for") ?? undefined,
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
 
-    return NextResponse.json({ subdomain }, { status: 201 });
+    return NextResponse.json({ subdomain: camelCaseKeys(subdomain) }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create subdomain";
     return NextResponse.json({ error: message }, { status: 500 });

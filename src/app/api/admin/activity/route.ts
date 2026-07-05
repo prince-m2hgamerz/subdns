@@ -35,8 +35,14 @@ export async function GET(req: NextRequest) {
 
   const { data: activities, count: total } = await query;
 
+  const mapped = (activities ?? []).map(({ created_at, user_agent, ...rest }) => ({
+    ...rest,
+    createdAt: created_at,
+    userAgent: user_agent,
+  }));
+
   return NextResponse.json({
-    activities,
+    activities: mapped,
     pagination: {
       page,
       limit,

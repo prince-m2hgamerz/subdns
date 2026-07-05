@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { updateDnsRecord, deleteDnsRecord } from "@/lib/cloudflare";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
+import { camelCaseKeys } from "@/lib/transform";
 
 export async function PATCH(
   req: NextRequest,
@@ -59,7 +60,7 @@ export async function PATCH(
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
 
-    return NextResponse.json({ record: updated });
+    return NextResponse.json({ record: camelCaseKeys(updated) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update DNS record";
     return NextResponse.json({ error: message }, { status: 500 });
