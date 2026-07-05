@@ -190,7 +190,7 @@ subdns/
 
 ```bash
 # Prerequisites: Node.js 20+, PostgreSQL 16+
-git clone https://github.com/m2hio/subdns.git
+git clone https://github.com/prince-m2hgamerz/subdns.git
 cd subdns
 npm install
 cp .env.example .env.local   # Fill in your credentials
@@ -223,13 +223,13 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 
 ## License
 
-[MIT](LICENSE) © 2026 [m2hio](https://github.com/m2hio)
+[MIT](LICENSE) © 2026 [m2hio](https://github.com/prince-m2hgamerz)
 
 ---
 
 ## Show Your Support
 
 - ⭐ Star the repo
-- 🐛 [Report bugs](https://github.com/m2hio/subdns/issues)
-- 💡 [Suggest features](https://github.com/m2hio/subdns/issues)
+- 🐛 [Report bugs](https://github.com/prince-m2hgamerz/subdns/issues)
+- 💡 [Suggest features](https://github.com/prince-m2hgamerz/subdns/issues)
 - 📢 Share with your developer friends

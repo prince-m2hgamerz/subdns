@@ -95,7 +95,7 @@ export default function AdminSupportPage() {
             <li>
               Report issues on the{" "}
               <a
-                href="https://github.com/your-org/your-repo/issues"
+                href="https://github.com/prince-m2hgamerz/subdns/issues"
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 GitHub repository

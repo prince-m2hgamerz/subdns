@@ -10,7 +10,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 ### Reporting Bugs
 
-1. Check if the bug has already been reported in [Issues](https://github.com/m2hio/subdns/issues)
+1. Check if the bug has already been reported in [Issues](https://github.com/prince-m2hgamerz/subdns/issues)
 2. If not, create a new issue using the **Bug Report** template
 3. Include:
    - Clear title and description
@@ -21,7 +21,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 ### Suggesting Features
 
-1. Check [Issues](https://github.com/m2hio/subdns/issues) for existing feature requests
+1. Check [Issues](https://github.com/prince-m2hgamerz/subdns/issues) for existing feature requests
 2. Create a new issue using the **Feature Request** template
 3. Describe:
    - What problem this solves
@@ -81,7 +81,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 1. Clone and install:
    ```bash
-   git clone https://github.com/m2hio/subdns.git
+   git clone https://github.com/prince-m2hgamerz/subdns.git
    cd subdns
    npm install
    ```
@@ -140,6 +140,6 @@ subdns/
 
 ## Questions?
 
-- Open a [Discussion](https://github.com/m2hio/subdns/discussions)
+- Open a [Discussion](https://github.com/prince-m2hgamerz/subdns/discussions)
 - Check the [Docs](https://subdns.m2hio.in/docs)
-- File an [Issue](https://github.com/m2hio/subdns/issues)
+- File an [Issue](https://github.com/prince-m2hgamerz/subdns/issues)
