@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase";
+import { getSettings } from "@/lib/settings-store";
 
 export async function POST(req: Request) {
   try {
@@ -17,6 +18,14 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { success: false, error: "Password must be at least 8 characters" },
         { status: 400 }
+      );
+    }
+
+    const settings = await getSettings();
+    if (settings.registrationOpen !== "true") {
+      return NextResponse.json(
+        { success: false, error: "Registration is currently closed" },
+        { status: 403 }
       );
     }
 

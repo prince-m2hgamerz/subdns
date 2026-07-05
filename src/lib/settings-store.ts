@@ -1,9 +1,5 @@
 import "server-only";
-import fs from "fs/promises";
-import path from "path";
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
+import { supabase } from "./supabase";
 
 const DEFAULT_SETTINGS: Record<string, string> = {
   siteName: "SubDNS",
@@ -14,31 +10,32 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   payment_mode: "test",
 };
 
-async function ensureFile() {
-  try {
-    await fs.access(SETTINGS_FILE);
-  } catch {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(SETTINGS_FILE, JSON.stringify(DEFAULT_SETTINGS, null, 2), "utf-8");
-  }
-}
-
 export async function getSettings(): Promise<Record<string, string>> {
-  await ensureFile();
-  const raw = await fs.readFile(SETTINGS_FILE, "utf-8");
-  return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  const { data, error } = await supabase.from("app_settings").select("key, value");
+
+  if (error) throw new Error(`Failed to fetch settings: ${error.message}`);
+
+  const db = Object.fromEntries(
+    (data ?? []).map((r: { key: string; value: string }) => [r.key, r.value])
+  );
+
+  return { ...DEFAULT_SETTINGS, ...db };
 }
 
 export async function updateSetting(key: string, value: string): Promise<Record<string, string>> {
-  const settings = await getSettings();
-  settings[key] = value;
-  await fs.writeFile(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf-8");
-  return settings;
+  const { error } = await supabase
+    .from("app_settings")
+    .upsert({ key, value }, { onConflict: "key" });
+
+  if (error) throw new Error(`Failed to update setting: ${error.message}`);
+
+  return getSettings();
 }
 
 export async function deleteSetting(key: string): Promise<Record<string, string>> {
-  const settings = await getSettings();
-  delete settings[key];
-  await fs.writeFile(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf-8");
-  return settings;
+  const { error } = await supabase.from("app_settings").delete().eq("key", key);
+
+  if (error) throw new Error(`Failed to delete setting: ${error.message}`);
+
+  return getSettings();
 }

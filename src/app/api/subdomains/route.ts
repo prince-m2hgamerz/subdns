@@ -7,6 +7,7 @@ import { getUserId } from "@/lib/get-user-id";
 import { camelCaseKeys } from "@/lib/transform";
 import { getPlan } from "@/lib/plans";
 import { checkPlanAccess } from "@/lib/subscription";
+import { getSettings } from "@/lib/settings-store";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -60,6 +61,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const subSettings = await getSettings();
+  const maxLen = parseInt(subSettings.maxSubdomainLength ?? "63");
+  if (name.length > maxLen) {
+    return NextResponse.json(
+      { error: `Subdomain name must be at most ${maxLen} characters` },
+      { status: 400 }
+    );
+  }
+
   if (isReservedName(name)) {
     return NextResponse.json({ error: "This subdomain name is reserved." }, { status: 400 });
   }
@@ -92,7 +102,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: access.error }, { status: 403 });
   }
 
-  const limit = plan.maxSubdomains;
+  const limit = user?.plan === "BRONZE" || !user?.plan
+    ? parseInt(subSettings.defaultSubdomainLimit ?? String(plan.maxSubdomains))
+    : plan.maxSubdomains;
 
   if ((userSubdomainCount ?? 0) >= limit) {
     return NextResponse.json(
