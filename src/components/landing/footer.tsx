@@ -47,15 +47,18 @@ const footerLinks: FooterGroup[] = [
     links: [
       { label: "Terms of Service", href: "/terms" },
       { label: "Privacy Policy", href: "/privacy" },
-      { label: "Cookie Policy", href: "/privacy" },
+      { label: "Cookie Policy", href: "/legal/cookies" },
+      { label: "Refunds & Cancellations", href: "/legal/refunds" },
+      { label: "Acceptable Use Policy", href: "/legal/aup" },
+      { label: "DMCA Policy", href: "/legal/dmca" },
     ],
   },
   {
     title: "Community",
     links: [
-      { label: "GitHub", href: "https://github.com", external: true },
-      { label: "X / Twitter", href: "https://x.com", external: true },
-      { label: "Discord", href: "https://discord.com", external: true },
+      { label: "GitHub", href: "https://github.com/prince-m2hgamerz", external: true },
+      { label: "X / Twitter", href: "https://x.com/m2hgamerz", external: true },
+      { label: "Telegram", href: "https://t.me/m2hgamerz", external: true },
     ],
   },
   {
