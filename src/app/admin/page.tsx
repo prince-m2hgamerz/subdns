@@ -145,7 +145,7 @@ export default async function AdminOverviewPage() {
               <p className="text-sm text-neutral-500">No recent activity</p>
             ) : (
               <div className="space-y-4">
-                {recentActivity.map((a) => (
+                {recentActivity.map((a: { id: string; description: string; createdAt: Date; user?: { name: string | null; email: string | null } | null }) => (
                   <div key={a.id} className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">{a.description}</p>
