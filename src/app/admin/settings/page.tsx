@@ -19,6 +19,11 @@ type Settings = {
   cloudflareEmail: string;
   cloudflareZoneId: string;
   cloudflareConfigured: boolean;
+  payment_mode: string;
+  cashfreeConfigured: boolean;
+  cashfreeTestConfigured: boolean;
+  cashfreeAppId: string;
+  cashfreeAppIdTest: string;
 };
 
 export default function AdminSettingsPage() {
@@ -35,6 +40,11 @@ export default function AdminSettingsPage() {
     cloudflareEmail: "",
     cloudflareZoneId: "",
     cloudflareConfigured: false,
+    payment_mode: "test",
+    cashfreeConfigured: false,
+    cashfreeTestConfigured: false,
+    cashfreeAppId: "",
+    cashfreeAppIdTest: "",
   });
 
   const fetchSettings = useCallback(async () => {
@@ -236,6 +246,54 @@ export default function AdminSettingsPage() {
           </div>
           <p className="text-xs text-neutral-500">
             Cloudflare credentials are managed via environment variables and cannot be changed here.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Cashfree Payments</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Payment Mode</span>
+            <button
+              role="switch"
+              aria-checked={settings.payment_mode === "prod"}
+              onClick={() => {
+                const next = settings.payment_mode === "test" ? "prod" : "test";
+                setSettings((prev) => ({ ...prev, payment_mode: next }));
+                saveSetting("payment_mode", next);
+              }}
+              className={`relative -m-2 p-2 inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                settings.payment_mode === "prod"
+                  ? "bg-green-500"
+                  : "bg-neutral-300 dark:bg-neutral-700"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.payment_mode === "prod" ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Live App ID</label>
+            <div className="flex items-center gap-2">
+              <Input value={settings.cashfreeAppId} readOnly className="opacity-60 font-mono" />
+              {settings.cashfreeConfigured && <Badge variant="success">Configured</Badge>}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Test App ID</label>
+            <div className="flex items-center gap-2">
+              <Input value={settings.cashfreeAppIdTest} readOnly className="opacity-60 font-mono" />
+              {settings.cashfreeTestConfigured && <Badge variant="success">Configured</Badge>}
+            </div>
+          </div>
+          <p className="text-xs text-neutral-500">
+            Payment mode switches between test and production. Cashfree API keys are managed via environment variables.
           </p>
         </CardContent>
       </Card>

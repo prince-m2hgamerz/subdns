@@ -168,13 +168,13 @@ export SUBDNS_API_KEY=sk_your_key_here
 
 \`\`\`bash
 # Create a subdomain
-curl -X POST https://api.subdns.m2hio.in/subdomains \\
+curl -X POST https://subdns.m2hio.in/subdomains \\
   -H "Authorization: Bearer $SUBDNS_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"name": "my-project", "proxied": true}'
 
 # Add a DNS record
-curl -X POST https://api.subdns.m2hio.in/dns \\
+curl -X POST https://subdns.m2hio.in/dns \\
   -H "Authorization: Bearer $SUBDNS_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -198,7 +198,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          curl -X POST https://api.subdns.m2hio.in/subdomains \\
+          curl -X POST https://subdns.m2hio.in/subdomains \\
             -H "Authorization: Bearer $" + "{{ secrets.SUBDNS_API_KEY }}" \\
             -d '{"name": "pr-$" + "{{ github.event.number }}"}'
 \`\`\`

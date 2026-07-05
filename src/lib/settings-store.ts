@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   registrationOpen: "true",
   defaultSubdomainLimit: "10",
   maxSubdomainLength: "63",
+  payment_mode: "test",
 };
 
 async function ensureFile() {

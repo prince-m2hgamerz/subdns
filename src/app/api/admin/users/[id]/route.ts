@@ -29,6 +29,7 @@ export async function PATCH(
   const updateData: Record<string, unknown> = {};
   if (typeof body.banned === "boolean") updateData.is_banned = body.banned;
   if (body.role === "USER" || body.role === "ADMIN") updateData.role = body.role;
+  if (typeof body.plan === "string") updateData.plan = body.plan;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
@@ -38,7 +39,7 @@ export async function PATCH(
     .from("users")
     .update(updateData)
     .eq("id", id)
-    .select("id, name, email, role, is_banned, created_at")
+    .select("id, name, email, role, is_banned, created_at, plan")
     .single();
 
   const { count } = await supabase
@@ -51,6 +52,7 @@ export async function PATCH(
     name: user?.name,
     email: user?.email,
     role: user?.role,
+    plan: user?.plan,
     isBanned: user?.is_banned,
     createdAt: user?.created_at,
     _count: { subdomains: count ?? 0 },

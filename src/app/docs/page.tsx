@@ -34,9 +34,9 @@ export default function DocsPage() {
           </div>
           <div className="space-y-4 p-6">
             <pre className="overflow-x-auto rounded-lg bg-card p-4 text-sm leading-relaxed text-foreground">
-              <code>{`curl -s -X POST https://subdns.m2hio.in/api/claim \\
+              <code>{`curl -s -X POST https://subdns.m2hio.in/api/subdomains \\
   -H "Content-Type: application/json" \\
-  -d '{"subdomain": "my-project"}'`}</code>
+  -d '{"name": "my-project", "domain": "m2hio.in", "type": "CNAME", "target": "my-project.vercel.app"}'`}</code>
             </pre>
             <p className="text-sm text-muted-foreground">
               Replace{" "}

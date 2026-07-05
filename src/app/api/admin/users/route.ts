@@ -22,7 +22,7 @@ export async function GET() {
 
   const { data: users } = await supabase
     .from("users")
-    .select("id, name, email, role, is_banned, created_at")
+    .select("id, name, email, role, is_banned, created_at, plan")
     .order("created_at", { ascending: false });
 
   const usersWithCount = await Promise.all(
@@ -36,6 +36,7 @@ export async function GET() {
         name: u.name,
         email: u.email,
         role: u.role,
+        plan: u.plan,
         isBanned: u.is_banned,
         createdAt: u.created_at,
         _count: { subdomains: count ?? 0 },

@@ -1,16 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { PLANS, type PlanId } from "@/lib/plans";
+import { Check, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const [name, setName] = useState(session?.user?.name || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [currentPlanId, setCurrentPlanId] = useState<PlanId | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/user/plan")
+      .then((r) => r.json())
+      .then((d) => { if (d.plan) setCurrentPlanId(d.plan); })
+      .finally(() => setPlanLoading(false));
+  }, []);
+
+  const currentPlan = currentPlanId ? PLANS[currentPlanId] : null;
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,21 +91,60 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Account</CardTitle>
+          <CardTitle>Current Plan</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <p className="text-sm font-medium">Subdomain Limit</p>
-            <p className="text-sm text-muted-foreground">
-              You can create up to 25 subdomains on the Free plan.
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium">Session</p>
-            <p className="text-sm text-muted-foreground">
-              You are logged in as {session?.user?.email}
-            </p>
-          </div>
+          {planLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading plan...
+            </div>
+          ) : currentPlan ? (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-bold">{currentPlan.name}</p>
+                  <p className="text-sm text-muted-foreground">{currentPlan.priceDisplay}/month</p>
+                </div>
+                <Badge variant="outline">{currentPlan.description}</Badge>
+              </div>
+              <ul className="space-y-1.5">
+                {currentPlan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <div className="grid grid-cols-2 gap-3 rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+                <div>
+                  <span className="text-xs text-muted-foreground">Subdomains</span>
+                  <p className="font-medium">{currentPlan.maxSubdomains}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">DNS Records</span>
+                  <p className="font-medium">{currentPlan.maxDnsRecords}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">API Keys</span>
+                  <p className="font-medium">{currentPlan.maxApiKeys}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">Log Retention</span>
+                  <p className="font-medium">{currentPlan.activityRetentionDays} days</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Link
+                  href="/dashboard/upgrade"
+                  className="inline-flex items-center justify-center rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+                >
+                  Upgrade Plan
+                </Link>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Could not load plan information.</p>
+          )}
         </CardContent>
       </Card>
     </div>

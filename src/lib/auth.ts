@@ -22,13 +22,24 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email and password required");
         }
 
-        const { data: user } = await supabase
+        const { data: user, error: lookupErr } = await supabase
           .from("users")
           .select("*")
           .eq("email", credentials.email)
-          .single();
+          .maybeSingle();
 
-        if (!user || !user.password) {
+        if (lookupErr) {
+          console.error("Supabase lookup error:", lookupErr);
+          throw new Error("Invalid credentials");
+        }
+
+        if (!user) {
+          console.error("User not found for email:", credentials.email);
+          throw new Error("Invalid credentials");
+        }
+
+        if (!user.password) {
+          console.error("User has no password field");
           throw new Error("Invalid credentials");
         }
 
@@ -38,6 +49,7 @@ export const authOptions: NextAuthOptions = {
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) {
+          console.error("Password mismatch for:", credentials.email);
           throw new Error("Invalid credentials");
         }
 
@@ -60,13 +72,14 @@ export const authOptions: NextAuthOptions = {
       if (token.id) {
         const { data: dbUser } = await supabase
           .from("users")
-          .select("role, is_banned")
+          .select("role, is_banned, plan")
           .eq("id", token.id as string)
           .single();
         if (!dbUser || dbUser.is_banned) {
           return {};
         }
         token.role = dbUser.role;
+        token.plan = dbUser.plan;
       }
       return token;
     },
@@ -74,6 +87,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token.id) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).plan = token.plan;
       }
       return session;
     },

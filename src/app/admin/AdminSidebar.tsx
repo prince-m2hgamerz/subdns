@@ -17,6 +17,8 @@ import {
   X,
   ArrowLeft,
   Bug,
+  DollarSign,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +29,8 @@ const navItems = [
   { href: "/admin/domains", label: "Domains", icon: Server },
   { href: "/admin/reserved", label: "Reserved Names", icon: Lock },
   { href: "/admin/activity", label: "Activity", icon: Activity },
+  { href: "/admin/plans", label: "Plans", icon: DollarSign },
+  { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/security", label: "Security", icon: Shield },
   { href: "/admin/contact", label: "Contact", icon: LifeBuoy },

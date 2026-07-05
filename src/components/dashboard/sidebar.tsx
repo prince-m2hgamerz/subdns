@@ -14,6 +14,7 @@ import {
   Shield,
   Bug,
   BookOpen,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -24,6 +25,7 @@ const links = [
   { href: "/dashboard/activity", icon: Activity, label: "Activity" },
   { href: "/dashboard/api-keys", icon: Key, label: "API Keys" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+  { href: "/dashboard/upgrade", icon: Zap, label: "Upgrade" },
   { href: "/dashboard/tutorials", icon: BookOpen, label: "Tutorials" },
   { href: "/dashboard/reports", icon: Bug, label: "My Reports" },
 ];

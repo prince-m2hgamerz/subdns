@@ -141,7 +141,7 @@ export default function SubdomainDetailPage() {
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-4 w-4" /> DNS Records
           </CardTitle>
-          <AddRecordForm subdomainId={id} onAdded={fetchSubdomain} />
+          <AddRecordForm subdomainId={id} subdomainName={subdomain.name} onAdded={fetchSubdomain} />
         </CardHeader>
         <CardContent>
           {subdomain.dnsRecords.length === 0 ? (
@@ -234,9 +234,11 @@ function DnsRecordRow({
 
 function AddRecordForm({
   subdomainId,
+  subdomainName,
   onAdded,
 }: {
   subdomainId: string;
+  subdomainName: string;
   onAdded: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -248,6 +250,21 @@ function AddRecordForm({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [srvService, setSrvService] = useState("");
+  const [srvProtocol, setSrvProtocol] = useState("_tcp");
+  const [srvWeight, setSrvWeight] = useState("1");
+  const [srvPort, setSrvPort] = useState("");
+
+  const showPriority = type === "MX" || type === "SRV";
+  const showProxied = type === "A" || type === "AAAA" || type === "CNAME";
+
+  const getContent = () => {
+    if (type === "SRV") {
+      return `${priority || "10"} ${srvWeight} ${srvPort} ${content}`;
+    }
+    return content;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -255,6 +272,17 @@ function AddRecordForm({
     if (!content) {
       setError("Content is required");
       return;
+    }
+
+    if (type === "SRV") {
+      if (!srvPort) {
+        setError("Port is required for SRV records");
+        return;
+      }
+      if (!srvService.startsWith("_")) {
+        setError("Service must start with _ (e.g. _sip, _xmpp)");
+        return;
+      }
     }
 
     setLoading(true);
@@ -266,10 +294,11 @@ function AddRecordForm({
         body: JSON.stringify({
           subdomainId,
           type,
-          content,
+          name: type === "SRV" ? `${srvService}.${srvProtocol}.${subdomainName}` : undefined,
+          content: getContent(),
           ttl: parseInt(ttl) || 1,
-          ...(priority ? { priority: parseInt(priority) } : {}),
-          proxied,
+          ...(showPriority && priority ? { priority: parseInt(priority) } : {}),
+          proxied: showProxied ? proxied : false,
         }),
       });
 
@@ -283,6 +312,10 @@ function AddRecordForm({
       setType("A");
       setPriority("");
       setProxied(false);
+      setSrvService("");
+      setSrvProtocol("_tcp");
+      setSrvWeight("1");
+      setSrvPort("");
       setOpen(false);
       onAdded();
     } catch {
@@ -334,51 +367,134 @@ function AddRecordForm({
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Value</label>
-                  <Input
-                    placeholder={
-                      type === "A"
-                        ? "192.168.1.1"
-                        : type === "CNAME"
-                          ? "target.example.com"
-                          : "value"
-                    }
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="font-mono"
-                    required
-                  />
-                </div>
+                {type === "SRV" && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Service</label>
+                        <Input
+                          placeholder="_sip"
+                          value={srvService}
+                          onChange={(e) => setSrvService(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Protocol</label>
+                        <select
+                          value={srvProtocol}
+                          onChange={(e) => setSrvProtocol(e.target.value)}
+                          className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                        >
+                          <option value="_tcp">TCP</option>
+                          <option value="_udp">UDP</option>
+                          <option value="_tls">TLS</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Port</label>
+                        <Input
+                          placeholder="5060"
+                          value={srvPort}
+                          onChange={(e) => setSrvPort(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Weight</label>
+                        <Input
+                          placeholder="10"
+                          value={srvWeight}
+                          onChange={(e) => setSrvWeight(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {type !== "SRV" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Value</label>
+                    <Input
+                      placeholder={
+                        type === "A"
+                          ? "192.168.1.1"
+                          : type === "AAAA"
+                            ? "2001:db8::1"
+                            : type === "CNAME"
+                              ? "target.example.com"
+                              : type === "MX"
+                                ? "mail.example.com"
+                                : type === "TXT"
+                                  ? "v=spf1 include:_spf.example.com ~all"
+                                  : type === "CAA"
+                                    ? '0 issue "letsencrypt.org"'
+                                    : "value"
+                      }
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      className="font-mono"
+                      required
+                    />
+                  </div>
+                )}
+
+                {type === "SRV" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Target</label>
+                    <Input
+                      placeholder="sip.example.com"
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      className="font-mono"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Format: priority weight port target → {priority || "10"} {srvWeight} {srvPort || "0"} {content || "target"}
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">TTL</label>
-                    <Input
-                      placeholder="1 (Auto)"
+                    <label className="text-sm font-medium">TTL (seconds)</label>
+                    <select
                       value={ttl}
                       onChange={(e) => setTtl(e.target.value)}
-                    />
+                      className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="1">Auto</option>
+                      <option value="60">1 minute</option>
+                      <option value="300">5 minutes</option>
+                      <option value="3600">1 hour</option>
+                      <option value="86400">1 day</option>
+                    </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Priority</label>
-                    <Input
-                      placeholder="10"
-                      value={priority}
-                      onChange={(e) => setPriority(e.target.value)}
-                    />
-                  </div>
+                  {showPriority && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Priority</label>
+                      <Input
+                        placeholder="10"
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={proxied}
-                    onChange={(e) => setProxied(e.target.checked)}
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  <span className="text-sm">Proxy through Cloudflare</span>
-                </label>
+                {showProxied && (
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={proxied}
+                      onChange={(e) => setProxied(e.target.checked)}
+                      className="h-4 w-4 rounded border-border"
+                    />
+                    <span className="text-sm">Proxy through Cloudflare</span>
+                  </label>
+                )}
 
                 <div className="flex gap-2">
                   <Button

@@ -1,0 +1,100 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { logActivity } from "@/lib/activity";
+
+async function checkAdmin(): Promise<NextResponse | null> {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string })?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data: admin } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return null;
+}
+
+export async function GET(req: NextRequest) {
+  const forbidden = await checkAdmin();
+  if (forbidden) return forbidden;
+
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status") || "ALL";
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
+  const offset = (page - 1) * limit;
+
+  let countQuery = supabase
+    .from("subscriptions")
+    .select("*", { count: "exact", head: true });
+
+  let dataQuery = supabase
+    .from("subscriptions")
+    .select("*, users!inner(email, name)")
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (status !== "ALL") {
+    countQuery = countQuery.eq("status", status);
+    dataQuery = dataQuery.eq("status", status);
+  }
+
+  const [{ count }, { data: subscriptions }] = await Promise.all([
+    countQuery,
+    dataQuery,
+  ]);
+
+  return NextResponse.json({ subscriptions, total: count ?? 0, page, limit });
+}
+
+export async function POST(req: NextRequest) {
+  const forbidden = await checkAdmin();
+  if (forbidden) return forbidden;
+
+  const { subscriptionId } = await req.json();
+  if (!subscriptionId) {
+    return NextResponse.json({ error: "subscriptionId is required" }, { status: 400 });
+  }
+
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("id", subscriptionId)
+    .single();
+
+  if (!sub) {
+    return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
+  }
+
+  if (sub.status !== "ACTIVE") {
+    return NextResponse.json({ error: "Only active subscriptions can be cancelled" }, { status: 400 });
+  }
+
+  await supabase
+    .from("subscriptions")
+    .update({ status: "CANCELLED" })
+    .eq("id", subscriptionId);
+
+  await supabase
+    .from("users")
+    .update({ plan: "BRONZE" })
+    .eq("id", sub.user_id);
+
+  await logActivity({
+    userId: sub.user_id,
+    event: "SUBSCRIPTION_CANCELLED",
+    metadata: { subscriptionId, plan: sub.plan, cancelledBy: "admin" },
+  });
+
+  return NextResponse.json({ success: true });
+}

@@ -3,6 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { generateApiKey } from "@/lib/utils";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
+import { getPlan } from "@/lib/plans";
+import { checkPlanAccess } from "@/lib/subscription";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -28,6 +30,27 @@ export async function POST(req: NextRequest) {
   const { name } = await req.json();
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  }
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("plan")
+    .eq("id", userId)
+    .single();
+  const plan = getPlan(user?.plan ?? "BRONZE");
+
+  const access = await checkPlanAccess(userId, plan.id);
+  if (!access.ok) {
+    return NextResponse.json({ error: access.error }, { status: 403 });
+  }
+
+  const { count: apiKeyCount } = await supabase
+    .from("api_keys")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if ((apiKeyCount ?? 0) >= plan.maxApiKeys) {
+    return NextResponse.json({ error: `API key limit (${plan.maxApiKeys}) reached. Upgrade your plan.` }, { status: 429 });
   }
 
   const key = `subdns_${generateApiKey()}`;

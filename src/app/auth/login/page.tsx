@@ -27,13 +27,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signIn("credentials", {
+      const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
-      window.location.href = "/dashboard";
+      if (result?.error) {
+        setError("Invalid credentials");
+        return;
+      }
 
       window.location.href = "/dashboard";
     } catch {

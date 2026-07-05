@@ -4,17 +4,21 @@ import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { Globe, Activity as ActivityIcon, Shield, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { getPlan, type PlanId } from "@/lib/plans";
 
 async function getStats(userId: string) {
   const [
     { count: subdomainCount },
     { count: activeCount },
     { count: recordCount },
+    { data: user },
     { data: recentActivity },
   ] = await Promise.all([
     supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("user_id", userId),
     supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("status", "ACTIVE"),
     supabase.from("dns_records").select("*, subdomain:subdomains!inner(user_id)", { count: "exact", head: true }).eq("subdomain.user_id", userId),
+    supabase.from("users").select("plan").eq("id", userId).single(),
     supabase.from("activities")
       .select("*")
       .eq("user_id", userId)
@@ -22,7 +26,13 @@ async function getStats(userId: string) {
       .limit(10),
   ]);
 
-  return { subdomainCount: subdomainCount ?? 0, activeCount: activeCount ?? 0, recordCount: recordCount ?? 0, recentActivity: recentActivity ?? [] };
+  return {
+    subdomainCount: subdomainCount ?? 0,
+    activeCount: activeCount ?? 0,
+    recordCount: recordCount ?? 0,
+    currentPlan: (user?.plan as PlanId) ?? "BRONZE",
+    recentActivity: recentActivity ?? [],
+  };
 }
 
 export default async function DashboardPage() {
@@ -34,35 +44,28 @@ export default async function DashboardPage() {
   }
 
   const stats = await getStats(userId);
+  const plan = getPlan(stats.currentPlan);
 
   const cards = [
-    {
-      title: "Total Subdomains",
-      value: stats.subdomainCount,
-      icon: Globe,
-    },
-    {
-      title: "Active",
-      value: stats.activeCount,
-      icon: Shield,
-    },
-    {
-      title: "DNS Records",
-      value: stats.recordCount,
-      icon: Zap,
-    },
-    {
-      title: "Recent Events",
-      value: stats.recentActivity.length,
-      icon: ActivityIcon,
-    },
+    { title: "Total Subdomains", value: stats.subdomainCount, icon: Globe },
+    { title: "Active", value: stats.activeCount, icon: Shield },
+    { title: "DNS Records", value: stats.recordCount, icon: Zap },
+    { title: "Recent Events", value: stats.recentActivity.length, icon: ActivityIcon },
   ];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Overview</h1>
-        <p className="text-sm text-muted-foreground">Welcome back, {session?.user?.name ?? "User"}</p>
+        <div className="text-sm text-muted-foreground">
+          Welcome back, {session?.user?.name ?? "User"}
+          <span className="ml-2">
+            <Badge variant="outline">{plan.name}</Badge>
+          </span>
+          <span className="ml-2 text-xs text-muted-foreground">
+            {stats.subdomainCount}/{plan.maxSubdomains} subdomains
+          </span>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

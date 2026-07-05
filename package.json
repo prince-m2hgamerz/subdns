@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@cashfreepayments/cashfree-js": "^1.0.7",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.4.0",
     "@radix-ui/react-avatar": "^1.2.1",

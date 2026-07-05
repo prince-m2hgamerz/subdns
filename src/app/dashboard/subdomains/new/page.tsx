@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isValidSubdomain, isReservedName } from "@/lib/utils";
 
 export default function NewSubdomainPage() {
   const router = useRouter();
@@ -42,6 +43,16 @@ export default function NewSubdomainPage() {
 
     if (!domain) {
       setError("No root domains available");
+      return;
+    }
+
+    if (!isValidSubdomain(name)) {
+      setError("Invalid subdomain name. Use only lowercase letters, numbers, and hyphens (cannot start or end with a hyphen).");
+      return;
+    }
+
+    if (isReservedName(name)) {
+      setError("This subdomain name is reserved.");
       return;
     }
 
@@ -123,6 +134,9 @@ export default function NewSubdomainPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                   required
+                  maxLength={63}
+                  pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?"
+                  title="Lowercase letters, numbers, and hyphens only. Cannot start or end with a hyphen (max 63 chars)."
                   className="font-mono"
                 />
                 <span className="shrink-0 text-sm text-muted-foreground">.{domain || "..."}</span>

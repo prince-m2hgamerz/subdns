@@ -22,6 +22,8 @@ async function main() {
     console.log('Existing tables:', tables.rows.map(r => r.table_name));
 
     await client.query('DROP TABLE IF EXISTS dns_records CASCADE');
+    await client.query('DROP TABLE IF EXISTS subscriptions CASCADE');
+    await client.query('DROP TABLE IF EXISTS plan_configs CASCADE');
     await client.query('DROP TABLE IF EXISTS activities CASCADE');
     await client.query('DROP TABLE IF EXISTS api_keys CASCADE');
     await client.query('DROP TABLE IF EXISTS contact_messages CASCADE');
@@ -43,6 +45,7 @@ async function main() {
         image TEXT,
         is_banned BOOLEAN NOT NULL DEFAULT false,
         max_subdomains INTEGER NOT NULL DEFAULT 10,
+        plan TEXT NOT NULL DEFAULT 'BRONZE',
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
@@ -124,6 +127,31 @@ async function main() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
+      CREATE TABLE subscriptions (
+        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        plan TEXT NOT NULL DEFAULT 'BRONZE',
+        order_id TEXT NOT NULL,
+        order_amount REAL NOT NULL DEFAULT 0,
+        payment_session_id TEXT,
+        paid_amount REAL,
+        status TEXT NOT NULL DEFAULT 'PENDING',
+        paid_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE plan_configs (
+        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        plan_id TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        price REAL NOT NULL DEFAULT 0,
+        features JSONB NOT NULL DEFAULT '[]',
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
       CREATE TABLE root_domains (
         id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
         domain TEXT NOT NULL,
@@ -132,6 +160,14 @@ async function main() {
         is_default BOOLEAN NOT NULL DEFAULT false,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+    `);
+
+    await client.query(`
+      INSERT INTO plan_configs (plan_id, name, description, price, features) VALUES
+        ('BRONZE', 'Bronze', 'Your free corner of the internet — no credit card, no catch.', 0, '["Up to 5 subdomains","50 DNS records","All DNS record types","Cloudflare proxy (orange cloud)","REST API access","Community support"]'),
+        ('SILVER', 'Silver', 'More corners, more control — for professionals who ship.', 1, '["Up to 30 subdomains","500 DNS records","All DNS record types","Cloudflare proxy (orange cloud)","REST API + CLI access","Activity logs (30-day retention)","Webhook notifications","Email support"]'),
+        ('GOLD', 'Gold', 'Collaborate at scale with shared workspaces and priority support.', 10, '["Up to 100 subdomains","2,500 DNS records","All DNS record types","Cloudflare proxy (orange cloud)","REST API + CLI access","Activity logs (90-day retention)","Webhook notifications","Team workspaces","Priority support"]')
+      ON CONFLICT (plan_id) DO NOTHING;
     `);
 
     console.log('All tables created successfully');

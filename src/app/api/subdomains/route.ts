@@ -5,6 +5,8 @@ import { logActivity } from "@/lib/activity";
 import { isValidSubdomain, isReservedName } from "@/lib/utils";
 import { getUserId } from "@/lib/get-user-id";
 import { camelCaseKeys } from "@/lib/transform";
+import { getPlan } from "@/lib/plans";
+import { checkPlanAccess } from "@/lib/subscription";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -80,14 +82,21 @@ export async function POST(req: NextRequest) {
 
   const { data: user } = await supabase
     .from("users")
-    .select("max_subdomains")
+    .select("plan")
     .eq("id", userId)
     .single();
-  const limit = user?.max_subdomains ?? 10;
+  const plan = getPlan(user?.plan ?? "BRONZE");
+
+  const access = await checkPlanAccess(userId, plan.id);
+  if (!access.ok) {
+    return NextResponse.json({ error: access.error }, { status: 403 });
+  }
+
+  const limit = plan.maxSubdomains;
 
   if ((userSubdomainCount ?? 0) >= limit) {
     return NextResponse.json(
-      { error: `Subdomain limit (${limit}) reached` },
+      { error: `Subdomain limit (${limit}) reached. Upgrade your plan.` },
       { status: 429 }
     );
   }
@@ -103,6 +112,8 @@ export async function POST(req: NextRequest) {
       ttl: 1,
     }, zoneId);
 
+    const cfId = cfRecord.result?.id ?? "";
+
     const { data: subdomain } = await supabase
       .from("subdomains")
       .insert({
@@ -113,10 +124,35 @@ export async function POST(req: NextRequest) {
         type,
         proxied,
         status: "ACTIVE",
-        cloudflare_id: cfRecord.result?.id ?? "",
+        cloudflare_id: cfId,
         user_id: userId,
       })
+      .select("id")
+      .single();
+
+    if (!subdomain) {
+      return NextResponse.json({ error: "Failed to create subdomain" }, { status: 500 });
+    }
+
+    if (cfId) {
+      await supabase
+        .from("dns_records")
+        .insert({
+          type,
+          name,
+          content: target,
+          ttl: 1,
+          proxied,
+          status: "ACTIVE",
+          cloudflare_id: cfId,
+          subdomain_id: subdomain.id,
+        });
+    }
+
+    const { data: subdomainWithRecords } = await supabase
+      .from("subdomains")
       .select("*, dns_records(*)")
+      .eq("id", subdomain.id)
       .single();
 
     await logActivity({
@@ -127,7 +163,7 @@ export async function POST(req: NextRequest) {
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
 
-    return NextResponse.json({ subdomain: camelCaseKeys(subdomain) }, { status: 201 });
+    return NextResponse.json({ subdomain: camelCaseKeys(subdomainWithRecords) }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create subdomain";
     return NextResponse.json({ error: message }, { status: 500 });

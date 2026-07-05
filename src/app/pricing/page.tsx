@@ -1,72 +1,41 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { PLANS, type Plan } from "@/lib/plans";
 
-export const metadata: Metadata = {
-  title: "Pricing — SubDNS",
-  description: "Your free corner of the internet starts at $0. Simple, transparent pricing for subdomain and DNS management — no surprises, no hidden fees.",
+type DisplayPlan = Plan & {
+  name: string;
+  description: string;
+  price: number;
+  priceDisplay: string;
+  features: string[];
 };
 
-const plans = [
-  {
-    name: "Free",
-    price: "$0",
-    desc: "Claim your corner of the internet — no credit card, no catch.",
-    features: [
-      "Up to 5 subdomains",
-      "50 DNS records",
-      "All DNS record types",
-      "Cloudflare proxy (orange cloud)",
-      "REST API access",
-      "Community support",
-    ],
-    cta: "Claim Your Corner",
-    href: "/auth/register",
-    featured: false,
-  },
-  {
-    name: "Pro",
-    price: "$9",
-    desc: "More corners, more control — for professionals who ship.",
-    features: [
-      "Up to 50 subdomains",
-      "500 DNS records",
-      "All DNS record types",
-      "Cloudflare proxy (orange cloud)",
-      "REST API + CLI access",
-      "Activity logs (30-day retention)",
-      "Webhook notifications",
-      "Email support",
-    ],
-    cta: "Go Pro",
-    href: "/auth/register",
-    featured: true,
-  },
-  {
-    name: "Team",
-    price: "$29",
-    desc: "Collaborate at scale with shared workspaces and priority support.",
-    features: [
-      "Up to 250 subdomains",
-      "2,500 DNS records",
-      "All DNS record types",
-      "Cloudflare proxy (orange cloud)",
-      "REST API + CLI access",
-      "Activity logs (90-day retention)",
-      "Webhook notifications",
-      "Team workspaces",
-      "Priority support",
-    ],
-    cta: "Start Team Plan",
-    href: "/auth/register",
-    featured: false,
-  },
-];
+const planMeta: Record<string, { cta: string; featured: boolean; tag?: string; href: string }> = {
+  BRONZE: { cta: "Claim Your Corner", featured: false, href: "/auth/register" },
+  SILVER: { cta: "Go Silver", featured: true, tag: "Most Popular", href: "/auth/register" },
+  GOLD: { cta: "Go Gold", featured: false, href: "/auth/register" },
+};
 
 export default function PricingPage() {
+  const [plans, setPlans] = useState<DisplayPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/plans")
+      .then((r) => r.json())
+      .then((data) => setPlans(data.plans ?? []))
+      .catch(() => setPlans(Object.values(PLANS) as DisplayPlan[]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const display = loading ? (Object.values(PLANS) as DisplayPlan[]) : plans;
+
   return (
     <>
       <Navbar />
@@ -81,41 +50,45 @@ export default function PricingPage() {
             </div>
 
             <div className="mt-16 grid gap-6 md:grid-cols-3">
-              {plans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`relative rounded-md border p-6 ${
-                    plan.featured
-                      ? "border-foreground/20 bg-card shadow-border"
-                      : "border-border bg-card"
-                  }`}
-                >
-                  {plan.featured && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-3 py-0.5 text-xs font-medium text-background">
-                      Most Popular
+              {display.map((plan) => {
+                const meta = planMeta[plan.id] ?? { cta: "Get Started", featured: false, href: "/auth/register" };
+
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative rounded-md border p-6 ${
+                      meta.featured
+                        ? "border-foreground/20 bg-card shadow-border"
+                        : "border-border bg-card"
+                    }`}
+                  >
+                    {meta.tag && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-foreground px-3 py-0.5 text-xs font-medium text-background">
+                        {meta.tag}
+                      </div>
+                    )}
+                    <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
+                    <div className="mt-2 flex items-baseline gap-1">
+                      <span className="text-4xl font-bold text-foreground">{plan.priceDisplay}</span>
+                      <span className="text-sm text-muted-foreground">/month</span>
                     </div>
-                  )}
-                  <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
-                  <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                    <span className="text-sm text-muted-foreground">/month</span>
+                    <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
+                    <ul className="mt-6 space-y-2.5">
+                      {plan.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link href={meta.href} className="mt-8 block">
+                      <Button variant={meta.featured ? "primary" : "outline"} className="w-full">
+                        {meta.cta}
+                      </Button>
+                    </Link>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{plan.desc}</p>
-                  <ul className="mt-6 space-y-2.5">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href={plan.href} className="mt-8 block">
-                    <Button variant={plan.featured ? "primary" : "outline"} className="w-full">
-                      {plan.cta}
-                    </Button>
-                  </Link>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <p className="mt-8 text-center text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/card-images/card-ssl.svg" alt="SubDNS Logo" width="120" />
+  <img src="public\vercel.svg" alt="SubDNS Logo" width="120" />
   <h1 align="center">SubDNS</h1>
   <p align="center">
     <strong>Free subdomain management platform powered by Cloudflare</strong>
@@ -48,7 +48,7 @@ sequenceDiagram
 ## Features
 
 ### 🆓 Free Subdomains
-Claim unlimited subdomains across multiple root domains at zero cost. No credit card required.
+Claim up to 10 subdomains across multiple root domains at zero cost. No credit card required.
 
 ### 🌐 Cloudflare Powered
 DNS records are created via Cloudflare API across multiple zones — automatic SSL, DDoS protection, and global CDN.

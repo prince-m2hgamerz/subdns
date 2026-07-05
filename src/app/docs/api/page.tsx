@@ -11,12 +11,15 @@ export const metadata: Metadata = {
 const endpoints = [
   {
     method: "POST",
-    path: "/api/claim",
-    auth: "None (public)",
-    desc: "Claim an available subdomain",
+    path: "/api/subdomains",
+    auth: "Required",
+    desc: "Create a subdomain",
     body: `{
   "subdomain": "my-project",
-  "domain": "m2hio.in"
+  "name": "my-project",
+  "domain": "m2hio.in",
+  "type": "CNAME",
+  "target": "my-project.vercel.app"
 }`,
     resp: `{
   "id": "clx...",
@@ -243,9 +246,7 @@ export default function ApiDocsPage() {
             <h2 className="display-sm">Rate Limiting</h2>
             <p className="mt-4 leading-relaxed text-muted-foreground">
               API requests are rate limited to 60 requests per minute per API key. Exceeding this
-              limit returns a <InlineCode>429</InlineCode> status. The{" "}
-              <InlineCode>/api/claim</InlineCode> endpoint is limited to 10 requests per minute from
-              a single IP.
+              limit returns a <InlineCode>429</InlineCode> status.
             </p>
           </section>
         </div>

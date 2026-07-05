@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PLANS } from "@/lib/plans";
 import {
   Search,
   ChevronDown,
@@ -16,11 +17,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+type PlanId = "BRONZE" | "SILVER" | "GOLD";
+
 type User = {
   id: string;
   name: string | null;
   email: string;
   role: "USER" | "ADMIN" | "SUPER_ADMIN";
+  plan: PlanId;
   isBanned: boolean;
   createdAt: string;
   _count: { subdomains: number };
@@ -103,6 +107,10 @@ export default function AdminUsersPage() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const changePlan = async (id: string, plan: PlanId) => {
+    await updateUser(id, { plan });
   };
 
   const batchUpdate = async (body: Record<string, unknown>) => {
@@ -221,6 +229,7 @@ export default function AdminUsersPage() {
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Name</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Email</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Role</th>
+                  <th className="px-3 py-2 text-left font-medium text-neutral-500">Plan</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Status</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Subdomains</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Joined</th>
@@ -256,6 +265,18 @@ export default function AdminUsersPage() {
                       <Badge variant={u.role === "ADMIN" || u.role === "SUPER_ADMIN" ? "default" : "outline"}>
                         {u.role}
                       </Badge>
+                    </td>
+                    <td className="px-3 py-3">
+                      <select
+                        className="rounded border border-neutral-200 bg-white px-2 py-1 text-xs dark:border-neutral-800 dark:bg-neutral-950"
+                        value={u.plan}
+                        disabled={actionLoading === u.id}
+                        onChange={(e) => changePlan(u.id, e.target.value as PlanId)}
+                      >
+                        {Object.values(PLANS).map((p) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-3 py-3">
                       {u.isBanned ? (
@@ -310,6 +331,10 @@ export default function AdminUsersPage() {
                           <div>
                             <span className="text-xs font-medium text-neutral-500">Email Verified</span>
                             <p className="text-xs">{u.createdAt ? "Yes (registered)" : "—"}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs font-medium text-neutral-500">Plan</span>
+                            <p className="text-xs">{PLANS[u.plan]?.name || u.plan}</p>
                           </div>
                           <div>
                             <span className="text-xs font-medium text-neutral-500">Subdomains</span>

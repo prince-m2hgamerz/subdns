@@ -4,6 +4,8 @@ import { createDnsRecord, detectDuplicateRecords, validateDnsRecord } from "@/li
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
 import { camelCaseKeys } from "@/lib/transform";
+import { getPlan } from "@/lib/plans";
+import { checkPlanAccess } from "@/lib/subscription";
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId(req);
@@ -39,13 +41,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Subdomain not found" }, { status: 404 });
   }
 
+  const { data: recUser } = await supabase
+    .from("users")
+    .select("plan")
+    .eq("id", userId)
+    .single();
+  const plan = getPlan(recUser?.plan ?? "BRONZE");
+
+  const access = await checkPlanAccess(userId, plan.id);
+  if (!access.ok) {
+    return NextResponse.json({ error: access.error }, { status: 403 });
+  }
+
   const { count: recordCount } = await supabase
     .from("dns_records")
     .select("*", { count: "exact", head: true })
     .eq("subdomain_id", subdomainId);
 
-  if ((recordCount ?? 0) >= 50) {
-    return NextResponse.json({ error: "DNS record limit (50) reached" }, { status: 429 });
+  if ((recordCount ?? 0) >= plan.maxDnsRecords) {
+    return NextResponse.json({ error: `DNS record limit (${plan.maxDnsRecords}) reached. Upgrade your plan.` }, { status: 429 });
   }
 
   const isDuplicate = await detectDuplicateRecords(
