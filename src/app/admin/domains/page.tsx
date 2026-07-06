@@ -217,7 +217,7 @@ export default function AdminDomainsPage() {
               <button
                 onClick={() => deleteDomain(domain.id)}
                 disabled={deleting === domain.id}
-                className="absolute right-3 top-3 visible md:invisible md:group-hover:visible text-neutral-400 hover:text-red-500"
+                className="absolute right-3 top-3 visible md:invisible md:group-hover:visible text-neutral-400 hover:text-red-500 cursor-pointer"
                 title="Delete domain"
               >
                 <Trash2 size={14} />

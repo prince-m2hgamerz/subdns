@@ -96,7 +96,7 @@ function CopyButton({ text }: { text: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      className="absolute right-3 top-3 rounded-md border border-border bg-muted px-2 py-1 text-xs text-muted-foreground opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-card hover:text-foreground"
+      className="absolute right-3 top-3 cursor-pointer rounded-md border border-border bg-muted px-2 py-1 text-xs text-muted-foreground opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-card hover:text-foreground"
     >
       {copied ? "Copied!" : "Copy"}
     </button>
@@ -160,7 +160,7 @@ export default function CliDocsPage() {
                 <button
                   key={opt.id}
                   onClick={() => setOs(opt.id)}
-                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                  className={`cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200 ${
                     os === opt.id
                       ? "border-primary bg-primary-muted text-primary shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:border-gray-300 hover:text-foreground"

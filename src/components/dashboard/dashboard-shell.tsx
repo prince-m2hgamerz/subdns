@@ -21,9 +21,9 @@ export function DashboardShell({
         speed={0.4}
         amplitude={0.3}
         interactive={false}
-        className="absolute inset-0 opacity-15"
+        className="pointer-events-none absolute inset-0 opacity-15"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/80 to-background" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/70 via-background/80 to-background" />
       <Sidebar isAdmin={isAdmin} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="relative flex flex-1 flex-col overflow-hidden">
         <DashboardNavbar onMobileToggle={() => setSidebarOpen((v) => !v)} />

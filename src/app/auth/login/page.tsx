@@ -52,9 +52,9 @@ export default function LoginPage() {
         baseColor={[0.05, 0.08, 0.12]}
         speed={0.5}
         amplitude={0.35}
-        className="absolute inset-0 opacity-30"
+        className="pointer-events-none absolute inset-0 opacity-30"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background" />
       <Card className="relative w-full max-w-sm">
         <CardHeader className="text-center">
           <Link href="/" className="mx-auto mb-4 flex items-center justify-center gap-2">
@@ -88,7 +88,7 @@ export default function LoginPage() {
                 <label className="text-sm font-medium">Password</label>
                 <Link
                   href="/auth/reset-password"
-                  className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                  className="text-xs text-neutral-550 hover:text-neutral-900 cursor-pointer"
                 >
                   Forgot password?
                 </Link>
@@ -107,7 +107,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-neutral-500">
+          <p className="mt-6 text-center text-sm text-neutral-550">
             Don&apos;t have an account?{" "}
             <Link href="/auth/register" className="font-medium text-neutral-900 underline dark:text-white">
               Sign up

@@ -105,7 +105,7 @@ function ResetForm() {
             <div className="space-y-2">
               <label className="text-sm font-medium">New password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-550" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="Min. 8 characters"
@@ -118,7 +118,7 @@ function ResetForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700"
+                  className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-neutral-550 hover:text-neutral-700"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -127,7 +127,7 @@ function ResetForm() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Confirm password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-550" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="Repeat your password"
@@ -159,14 +159,14 @@ function ResetForm() {
             <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
           </div>
           <CardTitle>Check your inbox</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-neutral-100 dark:text-white">
             If an account exists for {email}, we sent a password reset link.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
           <Link
             href="/auth/login"
-            className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+            className="inline-flex items-center gap-2 text-sm text-neutral-550 hover:text-neutral-900 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" /> Back to login
           </Link>
@@ -186,7 +186,7 @@ function ResetForm() {
       <CardContent>
         <form onSubmit={handleSendReset} className="space-y-4">
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-550" />
             <Input
               type="email"
               placeholder="you@example.com"
@@ -205,7 +205,7 @@ function ResetForm() {
           <div className="text-center">
             <Link
               href="/auth/login"
-              className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+              className="text-sm text-neutral-550 hover:text-neutral-900 cursor-pointer"
             >
               Back to login
             </Link>
@@ -218,9 +218,14 @@ function ResetForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <LiquidChrome baseColor={[0.05, 0.08, 0.12]} speed={0.5} amplitude={0.35} className="absolute inset-0 opacity-30" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+      <LiquidChrome
+        baseColor={[0.1, 0.14, 0.22]}
+        speed={0.5}
+        amplitude={0.4}
+        className="pointer-events-none absolute inset-0 opacity-60"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/10 via-background/30 to-background/70" />
       <Suspense fallback={
         <Card className="w-full max-w-md">
           <CardHeader>

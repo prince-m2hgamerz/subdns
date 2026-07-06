@@ -8,7 +8,7 @@ import { LiquidChrome } from "@/components/ui/liquid-chrome";
 export default function VerifyPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <LiquidChrome baseColor={[0.05, 0.08, 0.12]} speed={0.5} amplitude={0.35} className="absolute inset-0 opacity-30" />
+      <LiquidChrome baseColor={[0.05, 0.08, 0.12]} speed={0.5} amplitude={0.35} className="pointer-events-none absolute inset-0 opacity-30" />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-900">

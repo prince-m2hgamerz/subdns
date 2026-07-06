@@ -158,7 +158,7 @@ export default function AdminSettingsPage() {
                 setSettings((prev) => ({ ...prev, registrationOpen: next }));
                 saveSetting("registrationOpen", next);
               }}
-              className={`relative -m-2 p-2 inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative -m-2 p-2 inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors ${
                 settings.registrationOpen
                   ? "bg-green-500"
                   : "bg-neutral-300 dark:bg-neutral-700"
@@ -265,7 +265,7 @@ export default function AdminSettingsPage() {
                 setSettings((prev) => ({ ...prev, payment_mode: next }));
                 saveSetting("payment_mode", next);
               }}
-              className={`relative -m-2 p-2 inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative -m-2 p-2 inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors ${
                 settings.payment_mode === "prod"
                   ? "bg-green-500"
                   : "bg-neutral-300 dark:bg-neutral-700"

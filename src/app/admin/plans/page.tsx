@@ -269,7 +269,7 @@ export default function AdminPlansPage() {
                         <button
                           type="button"
                           onClick={() => removeFeature(idx)}
-                          className="text-neutral-400 hover:text-red-500"
+                          className="text-neutral-400 hover:text-red-500 cursor-pointer"
                         >
                           <Trash2 size={16} />
                         </button>

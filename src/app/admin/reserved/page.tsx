@@ -159,7 +159,7 @@ export default function AdminReservedPage() {
                       <button
                         onClick={() => deleteName(dbEntry.id)}
                         disabled={deleting === dbEntry.id}
-                        className="ml-1.5 inline md:invisible md:group-hover:visible text-neutral-400 hover:text-red-500"
+                        className="ml-1.5 inline md:invisible md:group-hover:visible text-neutral-400 hover:text-red-500 cursor-pointer"
                         title="Remove"
                       >
                         <Trash2 size={10} />

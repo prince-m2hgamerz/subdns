@@ -67,7 +67,7 @@ export function FAQ() {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="flex w-full items-center justify-between px-5 py-4 text-left"
+                className="flex w-full cursor-pointer items-center justify-between px-5 py-4 text-left"
               >
                 <span className="text-sm font-medium text-foreground">{faq.question}</span>
                 <ChevronDown

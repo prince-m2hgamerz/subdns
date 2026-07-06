@@ -222,7 +222,7 @@ export default function AdminUsersPage() {
               <thead>
                 <tr className="border-b border-neutral-200 dark:border-neutral-800">
                   <th className="w-10 px-3 py-2">
-                    <button onClick={toggleSelectAll} className="text-neutral-500 hover:text-neutral-900">
+                    <button onClick={toggleSelectAll} className="text-neutral-500 hover:text-neutral-900 cursor-pointer">
                       {selectAll ? <CheckSquare size={16} /> : <Square size={16} />}
                     </button>
                   </th>
@@ -242,7 +242,7 @@ export default function AdminUsersPage() {
                     <td className="px-3 py-3">
                       <button
                         onClick={() => toggleSelect(u.id)}
-                        className="text-neutral-500 hover:text-neutral-900"
+                        className="text-neutral-500 hover:text-neutral-900 cursor-pointer"
                       >
                         {selected.has(u.id) ? <CheckSquare size={16} /> : <Square size={16} />}
                       </button>
@@ -252,7 +252,7 @@ export default function AdminUsersPage() {
                         {u.name || "—"}
                         <button
                           onClick={() => setExpanded(expanded === u.id ? null : u.id)}
-                          className="text-neutral-400 hover:text-neutral-700"
+                          className="text-neutral-400 hover:text-neutral-700 cursor-pointer"
                         >
                           {expanded === u.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>

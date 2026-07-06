@@ -56,7 +56,7 @@ export default function AdminSidebar({
     <>
       <button
         type="button"
-        className="fixed left-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-950 text-white lg:hidden"
+        className="fixed left-4 top-4 z-50 flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-neutral-950 text-white lg:hidden"
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle sidebar"
       >

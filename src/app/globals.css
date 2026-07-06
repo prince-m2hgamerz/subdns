@@ -227,6 +227,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  button:not(:disabled),
+  a,
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   body::before {
     content: "";
     position: fixed;
