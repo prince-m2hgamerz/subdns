@@ -31,6 +31,9 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  alternates: {
+    canonical: "https://subdns.m2hio.in",
+  },
 };
 
 export default function RootLayout({
