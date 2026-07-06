@@ -12,6 +12,7 @@ import {
   Activity,
   Settings,
   Shield,
+  ShieldAlert,
   LifeBuoy,
   Menu,
   X,
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/security", label: "Security", icon: Shield },
+  { href: "/admin/abuse", label: "Abuse", icon: ShieldAlert },
   { href: "/admin/contact", label: "Contact", icon: LifeBuoy },
   { href: "/admin/reports", label: "Reports", icon: Bug },
 ];

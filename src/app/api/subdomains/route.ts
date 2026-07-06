@@ -8,6 +8,13 @@ import { camelCaseKeys } from "@/lib/transform";
 import { getPlan } from "@/lib/plans";
 import { checkPlanAccess } from "@/lib/subscription";
 import { getSettings } from "@/lib/settings-store";
+import {
+  scoreSubdomainName,
+  checkAbuseVelocity,
+  scoreTargetDomain,
+  computeVerdict,
+} from "@/lib/abuse-detection";
+import { classifyAbuse } from "@/lib/abuse-llm";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -115,6 +122,116 @@ export async function POST(req: NextRequest) {
 
   const zoneId = rootDomain.zone_id || undefined;
 
+  const nameSignals = scoreSubdomainName(name, domain, null);
+  const velocitySignals = await checkAbuseVelocity(userId);
+  const targetSignals = scoreTargetDomain(domain);
+  const allSignals = [...nameSignals, ...velocitySignals, ...targetSignals];
+  const totalScore = allSignals.reduce((sum, s) => sum + s.points, 0);
+  const verdict = computeVerdict(totalScore);
+
+  if (verdict === "block") {
+    try {
+      await supabase.from("abuse_flags").insert({
+        subdomain_name: name,
+        target_domain: domain,
+        user_id: userId,
+        score: totalScore,
+        signals: allSignals,
+        verdict,
+        review_status: "pending",
+      });
+
+      await logActivity({
+        userId,
+        event: "SECURITY_EVENT",
+        description: `Abuse block: "${name}.${domain}" (score: ${totalScore})`,
+        metadata: { name, domain, score: totalScore, signals: allSignals },
+        ip: req.headers.get("x-forwarded-for") ?? undefined,
+        userAgent: req.headers.get("user-agent") ?? undefined,
+      });
+    } catch { }
+
+    return NextResponse.json(
+      { error: "This subdomain name was flagged by our security system and cannot be created." },
+      { status: 403 }
+    );
+  }
+
+  let abuseFlagId: string | null = null;
+
+  if (verdict === "review_sync") {
+    const userData = await supabase
+      .from("users")
+      .select("created_at")
+      .eq("id", userId)
+      .single();
+
+    const accountAgeDays = userData.data?.created_at
+      ? (Date.now() - new Date(userData.data.created_at).getTime()) / (1000 * 60 * 60 * 24)
+      : 999;
+
+    const llmResult = await classifyAbuse({
+      subdomain: name,
+      targetDomain: domain,
+      accountAgeDays,
+      heuristicSignals: allSignals.map(s => `${s.name}(+${s.points})`).join(", "),
+    });
+
+    if (llmResult?.isAbusive && llmResult.confidence !== "low") {
+      try {
+        await supabase.from("abuse_flags").insert({
+          subdomain_name: name,
+          target_domain: domain,
+          user_id: userId,
+          score: totalScore,
+          signals: allSignals,
+          verdict: "block",
+          review_status: "pending",
+          llm_verdict: llmResult,
+        });
+
+        await logActivity({
+          userId,
+          event: "SECURITY_EVENT",
+          description: `Abuse block (LLM confirmed): "${name}.${domain}" (score: ${totalScore})`,
+          metadata: { name, domain, score: totalScore, signals: allSignals, llm: llmResult },
+          ip: req.headers.get("x-forwarded-for") ?? undefined,
+          userAgent: req.headers.get("user-agent") ?? undefined,
+        });
+      } catch { }
+
+      return NextResponse.json(
+        { error: "This subdomain name was flagged by our security system and cannot be created." },
+        { status: 403 }
+      );
+    }
+
+    const { data: flag } = await supabase.from("abuse_flags").insert({
+      subdomain_name: name,
+      target_domain: domain,
+      user_id: userId,
+      score: totalScore,
+      signals: allSignals,
+      verdict: "review_sync",
+      llm_verdict: llmResult,
+    }).select("id").maybeSingle();
+
+    abuseFlagId = flag?.id ?? null;
+  }
+
+  if (verdict === "review_async") {
+    const { data: flag } = await supabase.from("abuse_flags").insert({
+      subdomain_name: name,
+      target_domain: domain,
+      user_id: userId,
+      score: totalScore,
+      signals: allSignals,
+      verdict: "review_async",
+    }).select("id").maybeSingle();
+
+    abuseFlagId = flag?.id ?? null;
+  }
+
   try {
     const cfRecord = await createDnsRecord({
       type,
@@ -170,7 +287,7 @@ export async function POST(req: NextRequest) {
     await logActivity({
       userId,
       event: "SUBDOMAIN_CREATED",
-      metadata: { name, domain, target, type, proxied },
+      metadata: { name, domain, target, type, proxied, abuseFlagId: abuseFlagId ?? undefined },
       ip: req.headers.get("x-forwarded-for") ?? undefined,
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
