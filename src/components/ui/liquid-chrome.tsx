@@ -14,6 +14,8 @@ interface LiquidChromeProps {
   amplitude?: number;
   /** Enables mouse interaction if true */
   interactive?: boolean;
+  /** Strength of the cursor distortion effect. Default is 0.1 */
+  distortionStrength?: number;
 }
 
 const vertexShaderSource = `
@@ -31,6 +33,7 @@ const fragmentShaderSource = `
   uniform vec2 u_mouse;
   uniform vec3 u_baseColor;
   uniform float u_amplitude;
+  uniform float u_distortionStrength;
 
   // Simple 2D noise
   const mat2 m = mat2( 0.80,  0.60, -0.60,  0.80 );
@@ -77,7 +80,7 @@ const fragmentShaderSource = `
     float dist = length(diff);
     vec2 distortion = vec2(0.0);
     if (dist > 0.0) {
-        distortion = (diff / dist) * exp(-dist * 3.0) * 0.1;
+        distortion = (diff / dist) * exp(-dist * 3.0) * u_distortionStrength;
     }
     p += distortion;
 
@@ -112,7 +115,7 @@ const fragmentShaderSource = `
 
     gl_FragColor = vec4(col, 1.0);
   }
-`;;
+`;
 
 export function LiquidChrome({
   className,
@@ -120,6 +123,7 @@ export function LiquidChrome({
   speed = 1.0,
   amplitude = 0.6,
   interactive = true,
+  distortionStrength = 0.35,
 }: LiquidChromeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const colorRef = useRef(baseColor);
@@ -130,6 +134,8 @@ export function LiquidChrome({
   amplitudeRef.current = amplitude;
   const interactiveRef = useRef(interactive);
   interactiveRef.current = interactive;
+  const distortionRef = useRef(distortionStrength);
+  distortionRef.current = distortionStrength;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -184,25 +190,51 @@ export function LiquidChrome({
     const mouseLocation = gl.getUniformLocation(program, "u_mouse");
     const baseColorLocation = gl.getUniformLocation(program, "u_baseColor");
     const amplitudeLocation = gl.getUniformLocation(program, "u_amplitude");
+    const distortionLocation = gl.getUniformLocation(program, "u_distortionStrength");
 
+    // mouse position in NORMALIZED CANVAS-RELATIVE coords [0,1]
     let mouse: [number, number] = [0.5, 0.5];
     let animationFrameId: number;
     let startTime = performance.now();
     let isVisible = true;
 
+    // FIX: DPR-aware resize so canvas backing store matches display size.
+    // Without this, u_resolution can be wrong relative to the mouse's
+    // CSS-pixel coordinate space, causing the distortion to misalign
+    // or appear "stuck"/unresponsive.
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap for perf
+      const width = Math.max(1, Math.round(rect.width * dpr));
+      const height = Math.max(1, Math.round(rect.height * dpr));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
     };
 
+    // Mouse coords are computed relative to the canvas's live bounding
+    // rect at event time, so CSS layout changes are always reflected.
+    const updateMouseFromClient = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      mouse[0] = (clientX - rect.left) / rect.width;
+      mouse[1] = 1.0 - (clientY - rect.top) / rect.height;
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!interactiveRef.current) return;
-      const rect = canvas.getBoundingClientRect();
-      mouse[0] = (e.clientX - rect.left) / rect.width;
-      mouse[1] = 1.0 - (e.clientY - rect.top) / rect.height;
+      updateMouseFromClient(e.clientX, e.clientY);
+    };
+
+    // Also support touch so the effect works on mobile.
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!interactiveRef.current) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      updateMouseFromClient(touch.clientX, touch.clientY);
     };
 
     const observer = new IntersectionObserver(
@@ -213,8 +245,17 @@ export function LiquidChrome({
     );
     observer.observe(canvas);
 
+    // FIX: ResizeObserver watches the canvas's own box, not just the
+    // window. If this component sits in a container whose size changes
+    // without a window resize event (flex/grid reflow, sidebar toggle,
+    // content load, etc.), the old code never re-synced u_resolution,
+    // which is the main reason cursor interaction can look broken.
+    const resizeObserver = new ResizeObserver(() => resize());
+    resizeObserver.observe(canvas);
+
     window.addEventListener("resize", resize);
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
 
     resize();
 
@@ -226,6 +267,7 @@ export function LiquidChrome({
         gl.uniform2f(mouseLocation, mouse[0], mouse[1]);
         gl.uniform3f(baseColorLocation, colorRef.current[0], colorRef.current[1], colorRef.current[2]);
         gl.uniform1f(amplitudeLocation, amplitudeRef.current);
+        gl.uniform1f(distortionLocation, distortionRef.current);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
       }
@@ -236,8 +278,10 @@ export function LiquidChrome({
 
     return () => {
       observer.disconnect();
+      resizeObserver.disconnect();
       window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);

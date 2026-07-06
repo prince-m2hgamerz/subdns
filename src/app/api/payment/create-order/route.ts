@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { getUserId } from "@/lib/get-user-id";
 import { createOrder } from "@/lib/cashfree";
 import { getSettings } from "@/lib/settings-store";
 import { PLANS, type PlanId } from "@/lib/plans";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string })?.id;
+    const userId = await getUserId(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

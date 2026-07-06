@@ -1,11 +1,9 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { getUserId } from "@/lib/get-user-id";
 
-export async function PATCH(req: Request) {
-  const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string })?.id;
+export async function PATCH(req: NextRequest) {
+  const userId = await getUserId(req);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

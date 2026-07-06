@@ -48,6 +48,15 @@ export async function GET() {
   return NextResponse.json({ settings });
 }
 
+const ALLOWED_SETTING_KEYS = [
+  "siteName",
+  "siteDescription",
+  "registrationOpen",
+  "defaultSubdomainLimit",
+  "maxSubdomainLength",
+  "payment_mode",
+];
+
 const STATIC_KEYS = [
   "cloudflareEmail",
   "cloudflareZoneId",
@@ -101,7 +110,7 @@ export async function PUT(req: Request) {
 
   const { key, value } = await req.json();
 
-  if (!key || STATIC_KEYS.includes(key)) {
+  if (!key || STATIC_KEYS.includes(key) || !ALLOWED_SETTING_KEYS.includes(key)) {
     const fileSettings = await getSettings();
     return NextResponse.json({ settings: buildSettingsResponse(fileSettings) });
   }

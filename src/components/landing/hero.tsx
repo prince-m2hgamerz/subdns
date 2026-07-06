@@ -29,7 +29,8 @@ export function Hero() {
           baseColor={[0.1, 0.12, 0.18]}
           speed={0.6}
           amplitude={0.5}
-          interactive={false}
+          interactive={true}
+          distortionStrength={0.4}
           className="absolute inset-0 opacity-70"
         />
         <div className="absolute left-1/2 top-0 h-[700px] w-[1000px] -translate-x-1/2 bg-gradient-radial from-white/[0.07] via-transparent to-transparent" />

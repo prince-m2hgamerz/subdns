@@ -25,10 +25,30 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json();
+  if (typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
+  const VALID_STATUSES = ["ACTIVE", "SUSPENDED", "PENDING"];
   const updateData: Record<string, unknown> = {};
-  if (body.status) updateData.status = body.status;
-  if (body.domain) updateData.domain = body.domain;
+  if (body.status) {
+    if (!VALID_STATUSES.includes(body.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    if (typeof body.status !== "string" || body.status.length > 20) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    updateData.status = body.status;
+  }
+  if (body.domain) {
+    if (typeof body.domain !== "string" || body.domain.length < 1 || body.domain.length > 253) {
+      return NextResponse.json({ error: "Invalid domain" }, { status: 400 });
+    }
+    if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(body.domain)) {
+      return NextResponse.json({ error: "Invalid domain format" }, { status: 400 });
+    }
+    updateData.domain = body.domain;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });

@@ -3,15 +3,52 @@ import { supabase } from "@/lib/supabase";
 import { verifyWebhookSignature } from "@/lib/cashfree";
 import { logActivity } from "@/lib/activity";
 
+const WEBHOOK_BODY_LIMIT = 1024 * 100;
+
+const processedIds = new Set<string>();
+
+setInterval(() => processedIds.clear(), 300_000);
+
+const allowedIps = (process.env.CASHFREE_WEBHOOK_IPS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function isAllowedIp(req: Request): boolean {
+  if (allowedIps.length === 0) return true;
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "";
+  return allowedIps.includes(ip);
+}
+
 export async function POST(req: Request) {
   try {
+    if (!isAllowedIp(req)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const eventId = req.headers.get("x-webhook-id") || "";
+
     const body = await req.text();
+    if (body.length > WEBHOOK_BODY_LIMIT) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+
     const signature = req.headers.get("x-webhook-signature") || "";
     const timestamp = req.headers.get("x-webhook-timestamp") || "";
 
     const isValid = await verifyWebhookSignature(signature, timestamp, body);
     if (!isValid) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    if (eventId) {
+      if (processedIds.has(eventId)) {
+        return NextResponse.json({ success: true });
+      }
+      processedIds.add(eventId);
     }
 
     const payload = JSON.parse(body);

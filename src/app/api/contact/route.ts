@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     .select("role")
     .eq("id", userId)
     .single();
-  if (!user || user.role === "USER") {
+  if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

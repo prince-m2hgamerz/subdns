@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     .select("role")
     .eq("id", userId)
     .single();
-  const isAdmin = user && user.role !== "USER";
+  const isAdmin = user && (user.role === "ADMIN" || user.role === "SUPER_ADMIN");
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
