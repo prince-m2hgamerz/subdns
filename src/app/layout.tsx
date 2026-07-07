@@ -69,6 +69,9 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="monetag" content="b4a4a877c2fec250343df9b94f526591" />
+      </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
         <script
           type="application/ld+json"
