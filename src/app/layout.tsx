@@ -70,6 +70,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script src="https://quge5.com/88/tag.min.js" data-zone="257215" async data-cfasync="false"></script>
         <meta name="monetag" content="b4a4a877c2fec250343df9b94f526591" />
       </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
