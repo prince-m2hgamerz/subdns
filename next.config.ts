@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+  async headers() {
+    return [
+      {
+        source: "/api/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -45,8 +45,8 @@ const footerLinks: FooterGroup[] = [
   {
     title: "Legal",
     links: [
-      { label: "Terms of Service", href: "/terms" },
-      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/legal/terms" },
+      { label: "Privacy Policy", href: "/legal/privacy" },
       { label: "Cookie Policy", href: "/legal/cookies" },
       { label: "Refunds & Cancellations", href: "/legal/refunds" },
       { label: "Acceptable Use Policy", href: "/legal/aup" },

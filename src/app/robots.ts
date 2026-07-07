@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/_next/"],
+        disallow: ["/api/", "/_next/", "/dashboard/", "/admin/", "/sign-in/", "/sign-up/"],
       },
     ],
     sitemap: "https://subdns.m2hio.in/sitemap.xml",

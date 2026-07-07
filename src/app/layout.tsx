@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   keywords: ["subdomain", "dns", "cloudflare", "free subdomain", "m2hio", "developer tools"],
   authors: [{ name: "SubDNS" }],
   metadataBase: new URL("https://subdns.m2hio.in"),
+  alternates: {
+    canonical: "https://subdns.m2hio.in",
+  },
   openGraph: {
     title: "SubDNS — Free Subdomains for Developers",
     description: "Claim your free subdomain on m2hio.in instantly.",
@@ -22,17 +25,23 @@ export const metadata: Metadata = {
     siteName: "SubDNS",
     type: "website",
     locale: "en_US",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "SubDNS — Free Subdomains for Developers",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "SubDNS — Free Subdomains for Developers",
     description: "Claim your free subdomain on m2hio.in instantly.",
+    images: ["/og-image.svg"],
   },
   icons: {
     icon: "/favicon.ico",
-  },
-  alternates: {
-    canonical: "https://subdns.m2hio.in",
   },
 };
 
@@ -69,10 +78,6 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script src="https://quge5.com/88/tag.min.js" data-zone="257215" async data-cfasync="false"></script>
-        <meta name="monetag" content="b4a4a877c2fec250343df9b94f526591" />
-      </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
         <script
           type="application/ld+json"
