@@ -78,6 +78,13 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8492704974936957"
+          crossOrigin="anonymous"
+        ></script>
+      </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
         <script
           type="application/ld+json"

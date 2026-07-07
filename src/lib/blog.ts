@@ -430,16 +430,16 @@ jobs:
           curl -X POST https://subdns.m2hio.in/subdomains \\
             -H "Authorization: Bearer \${{ secrets.SUBDNS_API_KEY }}" \\
             -H "Content-Type: application/json" \\
-            -d '{"name": "pr-${{ github.event.number }}", "proxied": true}'
+            -d '{"name": "pr-\${{ github.event.number }}", "proxied": true}'
       - run: |
           curl -X POST https://subdns.m2hio.in/dns \\
             -H "Authorization: Bearer \${{ secrets.SUBDNS_API_KEY }}" \\
             -H "Content-Type: application/json" \\
             -d '{
-              "subdomain": "pr-${{ github.event.number }}",
+              "subdomain": "pr-\${{ github.event.number }}",
               "type": "CNAME",
               "name": "@",
-              "value": "${{ secrets.VERCEL_DEPLOYMENT_URL }}"
+              "value": "\${{ secrets.VERCEL_DEPLOYMENT_URL }}"
             }'
 \`\`\`
 
