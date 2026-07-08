@@ -5,6 +5,7 @@ import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
 import { getPlan } from "@/lib/plans";
 import { checkPlanAccess } from "@/lib/subscription";
+import { notify } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -68,6 +69,8 @@ export async function POST(req: NextRequest) {
     ip: req.headers.get("x-forwarded-for") || "",
     userAgent: req.headers.get("user-agent") || "",
   });
+
+  try { await notify(userId, "api_key_created", { name }); } catch {}
 
   return NextResponse.json({ key: apiKey!.key }, { status: 201 });
 }

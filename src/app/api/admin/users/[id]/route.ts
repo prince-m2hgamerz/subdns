@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { notify } from "@/lib/notifications";
 
 export async function PATCH(
   req: Request,
@@ -41,6 +42,10 @@ export async function PATCH(
     .eq("id", id)
     .select("id, name, email, role, is_banned, created_at, plan")
     .single();
+
+  if (body.banned === true) {
+    try { await notify(id, "account_banned", {}); } catch {}
+  }
 
   const { count } = await supabase
     .from("subdomains")

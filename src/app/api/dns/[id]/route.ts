@@ -4,6 +4,7 @@ import { updateDnsRecord, deleteDnsRecord } from "@/lib/cloudflare";
 import { logActivity } from "@/lib/activity";
 import { getUserId } from "@/lib/get-user-id";
 import { camelCaseKeys } from "@/lib/transform";
+import { notify } from "@/lib/notifications";
 
 export async function PATCH(
   req: NextRequest,
@@ -59,6 +60,8 @@ export async function PATCH(
       ip: req.headers.get("x-forwarded-for") ?? undefined,
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
+
+    try { await notify(userId, "dns_updated", { subdomain: record.name, record_type: record.type, record_content: content ?? record.content }); } catch {}
 
     return NextResponse.json({ record: camelCaseKeys(updated) });
   } catch (error) {

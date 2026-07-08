@@ -6,6 +6,7 @@ import { getUserId } from "@/lib/get-user-id";
 import { camelCaseKeys } from "@/lib/transform";
 import { getPlan } from "@/lib/plans";
 import { checkPlanAccess } from "@/lib/subscription";
+import { notify } from "@/lib/notifications";
 
 export async function POST(req: NextRequest) {
   const userId = await getUserId(req);
@@ -105,6 +106,8 @@ export async function POST(req: NextRequest) {
       ip: req.headers.get("x-forwarded-for") ?? undefined,
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
+
+    try { await notify(userId, "dns_created", { subdomain: subdomain.name, domain: subdomain.domain, record_type: type, record_content: content }); } catch {}
 
     return NextResponse.json({ record: camelCaseKeys(record) }, { status: 201 });
   } catch (error) {

@@ -15,6 +15,7 @@ import {
   computeVerdict,
 } from "@/lib/abuse-detection";
 import { classifyAbuse } from "@/lib/abuse-llm";
+import { notify } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -291,6 +292,8 @@ export async function POST(req: NextRequest) {
       ip: req.headers.get("x-forwarded-for") ?? undefined,
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
+
+    try { await notify(userId, "subdomain_created", { name, domain, target }); } catch {}
 
     return NextResponse.json({ subdomain: camelCaseKeys(subdomainWithRecords) }, { status: 201 });
   } catch (error) {

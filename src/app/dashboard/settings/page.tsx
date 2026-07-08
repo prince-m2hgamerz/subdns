@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PLANS, type PlanId } from "@/lib/plans";
-import { Check, Loader2 } from "lucide-react";
+import { Bell, Webhook, Check, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export default function SettingsPage() {
@@ -54,6 +54,29 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-sm text-muted-foreground">Manage your account settings</p>
+      </div>
+
+      <div className="flex gap-1 rounded-lg border border-border p-1 text-sm">
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-2 rounded-md px-3 py-1.5 font-medium"
+        >
+          Profile
+        </Link>
+        <Link
+          href="/dashboard/settings/notifications"
+          className="flex items-center gap-2 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Bell className="h-4 w-4" />
+          Notifications
+        </Link>
+        <Link
+          href="/dashboard/settings/webhooks"
+          className="flex items-center gap-2 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Webhook className="h-4 w-4" />
+          Webhooks
+        </Link>
       </div>
 
       <Card>

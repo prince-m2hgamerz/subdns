@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { verifyWebhookSignature } from "@/lib/cashfree";
 import { logActivity } from "@/lib/activity";
+import { notify } from "@/lib/notifications";
 
 const WEBHOOK_BODY_LIMIT = 1024 * 100;
 
@@ -87,6 +88,8 @@ export async function POST(req: Request) {
           event: "SUBSCRIPTION_ACTIVATED",
           metadata: { orderId, plan: sub.plan, paidAmount: paidAmount ?? sub.order_amount },
         });
+
+        try { await notify(sub.user_id, "plan_changed", { plan: sub.plan }); } catch {}
       }
     }
 

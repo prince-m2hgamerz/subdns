@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { getUserId } from "@/lib/get-user-id";
 import { camelCaseKeys } from "@/lib/transform";
+import { notify } from "@/lib/notifications";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getUserId(req);
@@ -35,12 +36,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     updateData.priority = priority;
   }
 
+  const { data: existing } = await supabase
+    .from("reports")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
   const { data: updated } = await supabase
     .from("reports")
     .update(updateData)
     .eq("id", id)
     .select("*")
     .single();
+
+  if (status && existing) {
+    try { await notify(existing.user_id, "report_status", { reportId: id, status }); } catch {}
+  }
 
   return NextResponse.json({ report: camelCaseKeys(updated) });
 }

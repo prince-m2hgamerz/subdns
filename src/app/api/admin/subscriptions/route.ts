@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { logActivity } from "@/lib/activity";
+import { notify } from "@/lib/notifications";
 
 async function checkAdmin(): Promise<NextResponse | null> {
   const session = await getServerSession(authOptions);
@@ -95,6 +96,8 @@ export async function POST(req: NextRequest) {
     event: "SUBSCRIPTION_CANCELLED",
     metadata: { subscriptionId, plan: sub.plan, cancelledBy: "admin" },
   });
+
+  try { await notify(sub.user_id, "plan_changed", { plan: "BRONZE" }); } catch {}
 
   return NextResponse.json({ success: true });
 }
