@@ -57,6 +57,54 @@ export interface AdminStats {
   popularDomains: { name: string; count: number }[];
 }
 
+export interface CustomDomain {
+  id: string;
+  userId: string;
+  domain: string;
+  subdomainId: string | null;
+  verificationToken: string;
+  verificationStatus: "PENDING" | "VERIFIED" | "FAILED";
+  sslStatus: "PENDING" | "ACTIVE" | "FAILED";
+  subdomainName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UptimeMonitor {
+  id: string;
+  userId: string;
+  subdomainId: string;
+  label: string;
+  url: string;
+  checkInterval: number;
+  timeout: number;
+  isActive: boolean;
+  lastStatus: "UP" | "DOWN" | "UNKNOWN" | null;
+  lastCheckedAt: string | null;
+  uptimePercentage: number;
+  subdomainName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UptimeCheck {
+  id: string;
+  monitorId: string;
+  status: "UP" | "DOWN";
+  statusCode: number | null;
+  responseTimeMs: number | null;
+  errorMessage: string | null;
+  checkedAt: string;
+}
+
+export interface DnsAnalytics {
+  period: string;
+  queries: number;
+  uniqueDomains: number;
+  threats: number;
+  threatTypes: Record<string, number>;
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;

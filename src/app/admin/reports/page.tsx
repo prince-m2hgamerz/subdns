@@ -132,7 +132,7 @@ export default function AdminReportsPage() {
                   <div className="space-y-1">
                     <CardTitle className="text-base">{r.subject}</CardTitle>
                     <div className="flex items-center gap-2 text-xs text-neutral-500">
-                      <span>{r.type.replace("_", " ")}</span>
+                      <span>{(r.type ?? "").replace("_", " ")}</span>
                       <span>by {r.user?.name || r.user?.email || "unknown"}</span>
                     </div>
                   </div>
@@ -141,7 +141,7 @@ export default function AdminReportsPage() {
                       {r.priority}
                     </span>
                     <span className={`text-xs font-medium uppercase ${statusColors[r.status] || ""}`}>
-                      {r.status.replace("_", " ")}
+                        {(r.status ?? "").replace("_", " ")}
                     </span>
                   </div>
                 </div>
@@ -155,7 +155,7 @@ export default function AdminReportsPage() {
 
                   <select
                     className="ml-auto rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={r.status}
+                    value={r.status ?? ""}
                     onChange={(e) => updateReport(r.id, { status: e.target.value })}
                   >
                     <option value="OPEN">Open</option>
@@ -166,7 +166,7 @@ export default function AdminReportsPage() {
 
                   <select
                     className="rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={r.priority}
+                    value={r.priority ?? ""}
                     onChange={(e) => updateReport(r.id, { priority: e.target.value })}
                   >
                     <option value="LOW">Low</option>

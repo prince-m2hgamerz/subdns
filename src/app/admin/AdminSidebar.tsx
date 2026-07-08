@@ -30,6 +30,8 @@ const navItems = [
   { href: "/admin/domains", label: "Domains", icon: Server },
   { href: "/admin/reserved", label: "Reserved Names", icon: Lock },
   { href: "/admin/activity", label: "Activity", icon: Activity },
+  { href: "/admin/analytics", label: "Analytics", icon: Activity },
+  { href: "/admin/uptime", label: "Uptime", icon: Server },
   { href: "/admin/plans", label: "Plans", icon: DollarSign },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
   { href: "/admin/settings", label: "Settings", icon: Settings },
