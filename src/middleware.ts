@@ -28,7 +28,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.cloudflare.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://vercel.live",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://sdk.cashfree.com https://*.cloudflare.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://vercel.live",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' blob: data: https:",
     "font-src 'self' https://fonts.gstatic.com",
@@ -93,5 +93,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
 };

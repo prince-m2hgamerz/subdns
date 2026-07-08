@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Globe, Plus, Copy, Check, Pencil } from "lucide-react";
+import { ArrowLeft, Trash2, Globe, Plus, Copy, Check, Pencil, CheckCircle, Download, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface DnsRecord {
   id: string;
@@ -33,6 +34,23 @@ interface Subdomain {
   dnsRecords: DnsRecord[];
 }
 
+const DNS_PRESETS = [
+  { label: "Vercel", type: "A", content: "76.76.21.21", ttl: 1, priority: null, proxied: true },
+  { label: "Netlify", type: "CNAME", content: "{subdomain}.netlify.app", ttl: 1, priority: null, proxied: true },
+  { label: "GitHub Pages", type: "A", content: "185.199.108.153", ttl: 1, priority: null, proxied: true },
+  { label: "Railway", type: "CNAME", content: "railway.app", ttl: 1, priority: null, proxied: true },
+  { label: "Fly.io", type: "CNAME", content: "fly.io", ttl: 1, priority: null, proxied: false },
+  { label: "Render", type: "CNAME", content: "onrender.com", ttl: 1, priority: null, proxied: true },
+  { label: "Cloudflare Workers", type: "CNAME", content: "*.workers.dev", ttl: 1, priority: null, proxied: true },
+  { label: "Bunny CDN", type: "CNAME", content: "{subdomain}.bunnycdn.com", ttl: 1, priority: null, proxied: false },
+  { label: "Shopify", type: "CNAME", content: "shops.myshopify.com", ttl: 1, priority: null, proxied: true },
+  { label: "Squarespace", type: "CNAME", content: "ext-cust.squarespace.com", ttl: 1, priority: null, proxied: true },
+  { label: "Google Sites", type: "CNAME", content: "ghs.googlehosted.com", ttl: 1, priority: null, proxied: true },
+  { label: "Google Workspace", type: "MX", content: "ASPMX.L.GOOGLE.COM", ttl: 3600, priority: 1, proxied: false },
+  { label: "Zoho Mail", type: "MX", content: "mx.zohomail.com", ttl: 3600, priority: 10, proxied: false },
+  { label: "Cloudflare Email", type: "MX", content: "route1.mx.cloudflare.net", ttl: 3600, priority: 10, proxied: false },
+] as const;
+
 export default function SubdomainDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -42,6 +60,72 @@ export default function SubdomainDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!subdomain) return;
+    if (selectedIds.size === subdomain.dnsRecords.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(subdomain.dnsRecords.map((r) => r.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected DNS record${selectedIds.size > 1 ? "s" : ""}?`)) return;
+
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/dns/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      if (!res.ok) throw new Error("Failed to delete");
+      setSelectedIds(new Set());
+      await fetchSubdomain();
+    } catch {
+      setError("Failed to delete selected records");
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const exportZone = () => {
+    if (!subdomain) return;
+    const lines: string[] = [
+      "; SubDNS Zone Export",
+      `; Domain: ${subdomain.name}.${subdomain.domain}`,
+      `; Generated: ${new Date().toISOString()}`,
+      `; Records: ${subdomain.dnsRecords.length}`,
+      "",
+    ];
+    for (const r of subdomain.dnsRecords) {
+      const fqdn = r.name || `${subdomain.name}.${subdomain.domain}`;
+      const ttl = r.ttl ?? 3600;
+      const extras = r.priority ? `${r.priority} ` : "";
+      const proxiedTag = r.proxied ? " ; proxied" : "";
+      lines.push(`${fqdn}. ${ttl} IN ${r.type} ${extras}${r.content}${proxiedTag}`);
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${subdomain.name}.${subdomain.domain}.zone.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const fetchSubdomain = useCallback(async () => {
     try {
@@ -125,6 +209,9 @@ export default function SubdomainDetailPage() {
             {subdomain.status}
           </Badge>
           {subdomain.proxied && <Badge variant="outline">Proxied</Badge>}
+          <Button variant="outline" size="sm" className="gap-2" onClick={exportZone}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
           <Button
             variant="destructive"
             size="sm"
@@ -150,6 +237,32 @@ export default function SubdomainDetailPage() {
             </p>
           ) : (
             <div className="space-y-2">
+              {selectedIds.size > 0 && (
+                <div className="flex items-center gap-2 pb-1">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    disabled={bulkDeleting}
+                  >
+                    {bulkDeleting ? "Deleting..." : `Delete Selected (${selectedIds.size})`}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedIds(new Set())}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              )}
+              <div className="flex items-center gap-2 px-4 py-2 text-xs text-muted-foreground">
+                <Checkbox
+                  checked={subdomain.dnsRecords.length > 0 && selectedIds.size === subdomain.dnsRecords.length}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <span>Select all</span>
+              </div>
               {subdomain.dnsRecords.map((record, i) => (
                 <DnsRecordRow
                   key={record.id}
@@ -158,6 +271,10 @@ export default function SubdomainDetailPage() {
                   onEdit={fetchSubdomain}
                   copied={copiedIndex === i}
                   onCopy={() => copyToClipboard(record.content, i)}
+                  subdomainName={subdomain.name}
+                  subdomainDomain={subdomain.domain}
+                  selected={selectedIds.has(record.id)}
+                  onToggleSelect={toggleSelect}
                 />
               ))}
             </div>
@@ -174,15 +291,25 @@ function DnsRecordRow({
   onEdit,
   copied,
   onCopy,
+  subdomainName,
+  subdomainDomain,
+  selected,
+  onToggleSelect,
 }: {
   record: DnsRecord;
   onDelete: () => void;
   onEdit: () => void;
   copied: boolean;
   onCopy: () => void;
+  subdomainName: string;
+  subdomainDomain: string;
+  selected: boolean;
+  onToggleSelect: (id: string) => void;
 }) {
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [propagation, setPropagation] = useState<{ resolved: boolean; ips: string[]; cloudflare: boolean } | null>(null);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -194,10 +321,31 @@ function DnsRecordRow({
     }
   };
 
+  const handleCheckPropagation = async () => {
+    setChecking(true);
+    setPropagation(null);
+    const fqdn = `${subdomainName}.${subdomainDomain}`;
+    try {
+      const res = await fetch(`/api/dns/${record.id}/propagation?domain=${encodeURIComponent(fqdn)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPropagation(data);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setChecking(false);
+    }
+  };
+
   return (
     <>
       <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
         <div className="flex items-center gap-3">
+          <Checkbox
+            checked={selected}
+            onCheckedChange={() => onToggleSelect(record.id)}
+          />
           <Badge variant="outline" className="w-16 justify-center font-mono text-xs">
             {record.type}
           </Badge>
@@ -207,6 +355,13 @@ function DnsRecordRow({
               TTL: {record.ttl ?? "Auto"}
               {record.priority ? ` | Priority: ${record.priority}` : ""}
               {record.proxied ? " | Proxied" : ""}
+              {propagation && (
+                <span className={propagation.resolved ? "text-green-500" : "text-amber-500"}>
+                  {" | "}
+                  {propagation.resolved ? `Resolved (${propagation.ips.join(", ")})` : "Unresolved"}
+                  {propagation.cloudflare ? " via Cloudflare" : ""}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -218,6 +373,16 @@ function DnsRecordRow({
             onClick={() => setEditing(true)}
           >
             <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 ${checking ? "animate-pulse" : ""}`}
+            onClick={handleCheckPropagation}
+            disabled={checking}
+            title="Check DNS propagation"
+          >
+            <CheckCircle className={`h-4 w-4 ${propagation?.resolved ? (propagation.cloudflare ? "text-blue-500" : "text-green-500") : ""}`} />
           </Button>
           <Button
             variant="ghost"
@@ -245,6 +410,7 @@ function DnsRecordRow({
       {editing && (
         <EditRecordForm
           record={record}
+          subdomainName={subdomainName}
           onClose={() => setEditing(false)}
           onUpdated={() => {
             setEditing(false);
@@ -260,10 +426,12 @@ function EditRecordForm({
   record,
   onClose,
   onUpdated,
+  subdomainName,
 }: {
   record: DnsRecord;
   onClose: () => void;
   onUpdated: () => void;
+  subdomainName: string;
 }) {
   const [type, setType] = useState(record.type);
   const [content, setContent] = useState(record.content);
@@ -359,6 +527,15 @@ function EditRecordForm({
               </div>
             )}
 
+            <PresetSelector
+              subdomainName={subdomainName}
+              onSelect={(p) => {
+                setContent(p.content);
+                setTtl(String(p.ttl ?? "1"));
+                setPriority(p.priority != null ? String(p.priority) : "");
+                setProxied(p.proxied);
+              }}
+            />
             <div className="space-y-2">
               <label className="text-sm font-medium">Type</label>
               <select
@@ -625,6 +802,16 @@ function AddRecordForm({
                   </div>
                 )}
 
+                <PresetSelector
+                  subdomainName={subdomainName}
+                  onSelect={(p) => {
+                    setType(p.type);
+                    setContent(p.content);
+                    setTtl(String(p.ttl ?? "1"));
+                    setPriority(p.priority != null ? String(p.priority) : "");
+                    setProxied(p.proxied);
+                  }}
+                />
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Type</label>
                   <select
@@ -789,6 +976,48 @@ function AddRecordForm({
           </Card>
         </div>
       )}
+    </div>
+  );
+}
+
+function PresetSelector({
+  subdomainName,
+  onSelect,
+}: {
+  subdomainName: string;
+  onSelect: (preset: { type: string; content: string; ttl: number | null; priority: number | null; proxied: boolean }) => void;
+}) {
+  const [selected, setSelected] = useState("");
+
+  const handleChange = (value: string) => {
+    setSelected(value);
+    if (!value) return;
+    const preset = DNS_PRESETS.find((p) => p.label === value);
+    if (!preset) return;
+    onSelect({
+      type: preset.type,
+      content: preset.content.replace("{subdomain}", subdomainName),
+      ttl: preset.ttl ?? 1,
+      priority: preset.priority != null ? preset.priority : null,
+      proxied: preset.proxied,
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium">Quick Preset</label>
+      <select
+        value={selected}
+        onChange={(e) => handleChange(e.target.value)}
+        className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+      >
+        <option value="">Select a platform...</option>
+        {DNS_PRESETS.map((p) => (
+          <option key={p.label} value={p.label}>
+            {p.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

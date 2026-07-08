@@ -1,5 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { supabase } from "./supabase";
 
@@ -22,24 +24,17 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email and password required");
         }
 
-        const { data: user, error: lookupErr } = await supabase
+        const { data: user } = await supabase
           .from("users")
           .select("*")
           .eq("email", credentials.email)
           .maybeSingle();
 
-        if (lookupErr) {
-          console.error("Supabase lookup error:", lookupErr);
-          throw new Error("Invalid credentials");
-        }
-
         if (!user) {
-          console.error("User not found for email:", credentials.email);
           throw new Error("Invalid credentials");
         }
 
         if (!user.password) {
-          console.error("User has no password field");
           throw new Error("Invalid credentials");
         }
 
@@ -49,7 +44,6 @@ export const authOptions: NextAuthOptions = {
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) {
-          console.error("Password mismatch for:", credentials.email);
           throw new Error("Invalid credentials");
         }
 
@@ -62,12 +56,58 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
+    GitHubProvider({
+      clientId: process.env.NODE_ENV === "production" ? process.env.GITHUB_ID_PROD! : process.env.GITHUB_ID_DEV!,
+      clientSecret: process.env.NODE_ENV === "production" ? process.env.GITHUB_SECRET_PROD! : process.env.GITHUB_SECRET_DEV!,
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_ID!,
+      clientSecret: process.env.GOOGLE_SECRET!,
+    }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      if (account?.provider === "credentials") return true;
+
+      if (!user.email) return false;
+
+      const { data: existing } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", user.email)
+        .maybeSingle();
+
+      if (!existing) {
+        const { error } = await supabase.from("users").insert({
+          email: user.email,
+          name: user.name || user.email.split("@")[0],
+          image: user.image,
+          password: "",
+        });
+        if (error) {
+          console.error("Failed to create OAuth user:", error);
+          return false;
+        }
+      }
+
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
+        if (account?.provider === "credentials") {
+          token.id = user.id;
+          token.role = user.role;
+        } else if (user.email) {
+          const { data: dbUser } = await supabase
+            .from("users")
+            .select("*")
+            .eq("email", user.email)
+            .maybeSingle();
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+          }
+        }
       }
       if (token.id) {
         const { data: dbUser } = await supabase

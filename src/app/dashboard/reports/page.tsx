@@ -121,7 +121,7 @@ export default function MyReportsPage() {
                   <div className="space-y-1">
                     <CardTitle className="text-base">{r.subject}</CardTitle>
                     <div className="text-xs text-neutral-500">
-                      {r.type.replace("_", " ")}
+                      {(r.type ?? "").replace("_", " ")}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export default function MyReportsPage() {
                       {r.priority}
                     </span>
                     <span className={`text-xs font-medium uppercase ${statusColors[r.status] || ""}`}>
-                      {r.status.replace("_", " ")}
+                      {(r.status ?? "").replace("_", " ")}
                     </span>
                   </div>
                 </div>
