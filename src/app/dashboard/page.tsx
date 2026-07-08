@@ -95,26 +95,26 @@ export default async function DashboardPage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {stats.recentActivity.map((event: { id: string; type: string; metadata: unknown; created_at: string }) => (
-                <div
-                  key={event.id}
-                  className="flex items-center justify-between rounded-lg border border-border px-4 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{event.type}</p>
-                    {event.metadata ? (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {typeof event.metadata === "string"
-                          ? event.metadata
-                          : JSON.stringify(event.metadata).slice(0, 100)}
-                      </p>
-                    ) : null}
+                {stats.recentActivity.map((event: { id: string; type: string; metadata: unknown; created_at: string }) => (
+                  <div
+                    key={event.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border px-4 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{event.type}</p>
+                      {event.metadata ? (
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {typeof event.metadata === "string"
+                            ? event.metadata
+                            : JSON.stringify(event.metadata).slice(0, 100)}
+                        </p>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {new Date(event.created_at).toLocaleDateString()}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(event.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </CardContent>

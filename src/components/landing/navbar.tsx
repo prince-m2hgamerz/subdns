@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X, ChevronDown, ExternalLink, LayoutDashboard } from "lucide-react";
+import { Menu, X, ChevronDown, ExternalLink, LayoutDashboard, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { useState, useRef, useEffect } from "react";
@@ -112,6 +112,15 @@ export function Navbar() {
     if (navRef.current) navRef.current.dataset.navOpen = String(open);
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
   return (
       <nav
         ref={navRef}
@@ -208,69 +217,119 @@ export function Navbar() {
         </button>
       </div>
 
+      {open && (
+        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setOpen(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        </div>
+      )}
       <div
         className={cn(
-          "border-t border-border bg-background/80 backdrop-blur-md md:hidden",
-          open ? "block" : "hidden"
+          "fixed top-0 right-0 bottom-0 z-50 w-[85vw] max-w-sm border-l border-border bg-background shadow-2xl transition-transform duration-300 ease-in-out md:hidden",
+          open ? "translate-x-0" : "translate-x-full"
         )}
       >
-        <div className="space-y-1 px-4 pb-4 pt-2">
-          {products.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
+        <div className="flex h-full flex-col overflow-y-auto px-5 pb-8 pt-4">
+          <div className="mb-4 flex items-center justify-between">
+            <Logo />
+            <button
               onClick={() => setOpen(false)}
-              className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+              className="flex cursor-pointer items-center rounded-lg p-2 hover:bg-gray-100"
             >
-              {item.label}
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <div className="space-y-0.5">
+                <Link
+                  href="/pricing"
+                  onClick={() => setOpen(false)}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-gray-100"
+                >
+                  Pricing
+                </Link>
+                <Link
+                  href="/enterprise"
+                  onClick={() => setOpen(false)}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-gray-100"
+                >
+                  Enterprise
+                </Link>
+                <Link
+                  href="/about"
+                  onClick={() => setOpen(false)}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-gray-100"
+                >
+                  About
+                </Link>
+                <Link
+                  href="/contact"
+                  onClick={() => setOpen(false)}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-gray-100"
+                >
+                  Contact
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center gap-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                Products
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <div className="space-y-0.5">
+                {products.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors hover:bg-gray-100"
+                  >
+                    <div>
+                      <div className="font-medium text-foreground">{item.label}</div>
+                      {item.desc && <div className="text-xs text-muted-foreground">{item.desc}</div>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center gap-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                Resources
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <div className="space-y-0.5">
+                {resources.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors hover:bg-gray-100",
+                      item.external ? "justify-between" : ""
+                    )}
+                    {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  >
+                    <div>
+                      <div className="font-medium text-foreground">{item.label}</div>
+                      {item.desc && <div className="text-xs text-muted-foreground">{item.desc}</div>}
+                    </div>
+                    {item.external && <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-auto flex flex-col gap-2 pt-6">
+            <Link href="/demo" onClick={() => setOpen(false)}>
+              <Button variant="secondary" size="sm" className="w-full gap-2">
+                <Monitor className="h-3.5 w-3.5" />
+                Get a Demo
+              </Button>
             </Link>
-          ))}
-          {resources.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
-          <Link
-            href="/about"
-            onClick={() => setOpen(false)}
-            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
-          >
-            About
-          </Link>
-          <Link
-            href="/blog"
-            onClick={() => setOpen(false)}
-            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
-          >
-            Blog
-          </Link>
-          <Link
-            href="/enterprise"
-            onClick={() => setOpen(false)}
-            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
-          >
-            Enterprise
-          </Link>
-          <Link
-            href="/pricing"
-            onClick={() => setOpen(false)}
-            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/contact"
-            onClick={() => setOpen(false)}
-            className="block cursor-pointer rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
-          >
-            Contact
-          </Link>
-          <div className="flex flex-col gap-2 pt-3">
             {session ? (
               <>
                 <Link href="/dashboard" onClick={() => setOpen(false)}>

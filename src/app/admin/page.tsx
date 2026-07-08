@@ -25,6 +25,7 @@ export default async function AdminOverviewPage() {
     { count: totalRecords },
     { count: totalDomains },
     { count: reservedCount },
+    { count: totalApiKeys },
     { count: activeSubdomains },
     { count: suspendedSubdomains },
     { count: pendingSubdomains },
@@ -38,6 +39,7 @@ export default async function AdminOverviewPage() {
     supabase.from("dns_records").select("*", { count: "exact", head: true }),
     supabase.from("root_domains").select("*", { count: "exact", head: true }),
     supabase.from("reserved_names").select("*", { count: "exact", head: true }),
+    supabase.from("api_keys").select("*", { count: "exact", head: true }),
     supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("status", "ACTIVE"),
     supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("status", "SUSPENDED"),
     supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
@@ -57,13 +59,13 @@ export default async function AdminOverviewPage() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Admin Overview</h1>
+    <div className="space-y-4 lg:space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="pl-14 sm:pl-0">
+          <h1 className="text-xl font-bold sm:text-2xl">Admin Overview</h1>
           <p className="text-sm text-neutral-500">Platform-wide statistics and management</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <span
             className={`h-2 w-2 rounded-full ${
               cloudflareConfigured ? "bg-emerald-500" : "bg-red-500"
@@ -75,25 +77,25 @@ export default async function AdminOverviewPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-neutral-500">Total Users</CardTitle>
+          <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs font-medium text-neutral-500 sm:text-sm">Total Users</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{totalUsers}</p>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <p className="text-xl font-bold sm:text-2xl lg:text-3xl">{totalUsers}</p>
             <p className="mt-1 text-xs text-neutral-500">
               {bannedUsers} banned
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-neutral-500">Subdomains</CardTitle>
+          <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs font-medium text-neutral-500 sm:text-sm">Subdomains</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{totalSubdomains}</p>
-            <div className="mt-1 flex gap-2 text-xs text-neutral-500">
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <p className="text-xl font-bold sm:text-2xl lg:text-3xl">{totalSubdomains}</p>
+            <div className="mt-1 flex flex-wrap gap-1.5 text-xs text-neutral-500">
               <span className="text-emerald-500">{activeSubdomains} active</span>
               {(suspendedSubdomains ?? 0) > 0 && (
                 <span className="text-red-500">{suspendedSubdomains ?? 0} suspended</span>
@@ -105,52 +107,52 @@ export default async function AdminOverviewPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-neutral-500">DNS Records</CardTitle>
+          <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs font-medium text-neutral-500 sm:text-sm">DNS Records</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{totalRecords}</p>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <p className="text-xl font-bold sm:text-2xl lg:text-3xl">{totalRecords}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-neutral-500">Root Domains</CardTitle>
+          <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs font-medium text-neutral-500 sm:text-sm">Root Domains</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{totalDomains}</p>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <p className="text-xl font-bold sm:text-2xl lg:text-3xl">{totalDomains}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-neutral-500">API Keys</CardTitle>
+          <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs font-medium text-neutral-500 sm:text-sm">API Keys</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">-</p>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <p className="text-xl font-bold sm:text-2xl lg:text-3xl">{totalApiKeys ?? 0}</p>
             <p className="mt-1 text-xs text-neutral-500">{reservedCount ?? 0} reserved names</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+      <div className="grid min-w-0 gap-4 lg:gap-6 lg:grid-cols-3">
+        <Card className="overflow-hidden lg:col-span-2">
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-sm sm:text-base">Recent Activity</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
             {(recentActivity?.length ?? 0) === 0 ? (
               <p className="text-sm text-neutral-500">No recent activity</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2 sm:space-y-3">
                 {recentActivity?.map((a: { id: string; description: string; created_at: string; user?: { name: string | null; email: string | null } | null }) => (
-                  <div key={a.id} className="flex items-start justify-between gap-4">
+                  <div key={a.id} className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">{a.description}</p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="truncate text-xs text-neutral-500">
                         {a.user?.name || a.user?.email || "System"}
                       </p>
                     </div>
-                    <span className="shrink-0 text-xs text-neutral-400">
-                      {new Date(a.created_at).toLocaleString()}
+                    <span className="text-xs text-neutral-400 sm:shrink-0 sm:whitespace-nowrap">
+                      {new Date(a.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 ))}
@@ -159,26 +161,26 @@ export default async function AdminOverviewPage() {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
+        <div className="min-w-0 space-y-4 lg:space-y-6">
+          <Card className="overflow-hidden">
+            <CardHeader className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <CardTitle>Recent Users</CardTitle>
-                <span className="text-xs text-neutral-400">{totalUsers ?? 0} total</span>
+                <CardTitle className="text-sm sm:text-base">Recent Users</CardTitle>
+                <span className="shrink-0 text-xs text-neutral-400">{totalUsers ?? 0} total</span>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
               {(recentUsers?.length ?? 0) === 0 ? (
                 <p className="text-sm text-neutral-500">No users yet</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {recentUsers?.map((u: { id: string; name: string | null; email: string; role: string; created_at: string }) => (
-                    <div key={u.id} className="flex items-center justify-between">
+                    <div key={u.id} className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{u.name || "Unnamed"}</p>
                         <p className="truncate text-xs text-neutral-500">{u.email}</p>
                       </div>
-                      <span className="shrink-0 text-xs text-neutral-400">
+                      <span className="text-xs text-neutral-400 sm:shrink-0">
                         {new Date(u.created_at).toLocaleDateString()}
                       </span>
                     </div>
@@ -188,20 +190,20 @@ export default async function AdminOverviewPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
+          <Card className="overflow-hidden">
+            <CardHeader className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <CardTitle>Recent Subdomains</CardTitle>
-                <span className="text-xs text-neutral-400">{totalSubdomains ?? 0} total</span>
+                <CardTitle className="text-sm sm:text-base">Recent Subdomains</CardTitle>
+                <span className="shrink-0 text-xs text-neutral-400">{totalSubdomains ?? 0} total</span>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
               {(recentSubdomains?.length ?? 0) === 0 ? (
                 <p className="text-sm text-neutral-500">No subdomains yet</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {recentSubdomains?.map((s: { id: string; name: string; domain: string; created_at: string; user?: { name: string | null; email: string | null } | null }) => (
-                    <div key={s.id} className="flex items-center justify-between">
+                    <div key={s.id} className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-mono text-sm">
                           {s.name}.{s.domain}
@@ -210,7 +212,7 @@ export default async function AdminOverviewPage() {
                           {s.user?.name || s.user?.email}
                         </p>
                       </div>
-                      <span className="shrink-0 text-xs text-neutral-400">
+                      <span className="text-xs text-neutral-400 sm:shrink-0">
                         {new Date(s.created_at).toLocaleDateString()}
                       </span>
                     </div>
