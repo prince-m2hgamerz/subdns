@@ -1,0 +1,17 @@
+export const dnsRecordTypes = [
+  "A",
+  "AAAA",
+  "CNAME",
+  "MX",
+  "TXT",
+  "NS",
+  "SRV",
+  "CAA",
+  "DS",
+  "SMIMEA",
+  "SSHFP",
+  "TLSA",
+  "URI",
+  "SVCB",
+  "HTTPS",
+] as const;

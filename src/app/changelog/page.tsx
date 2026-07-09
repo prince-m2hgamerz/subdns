@@ -9,6 +9,18 @@ export const metadata: Metadata = {
 
 const releases = [
   {
+    version: "v2.2.0",
+    date: "July 9, 2026",
+    changes: [
+      { type: "feature", text: "Uptime monitoring — track every subdomain with real-time checks and public badges" },
+      { type: "feature", text: "Custom domains — bring your own domain, verified with TXT records" },
+      { type: "feature", text: "Subscription plans with Cashfree payments — free tier plus pro for power users" },
+      { type: "feature", text: "DNS analytics — query volumes, top records, and traffic patterns at a glance" },
+      { type: "feature", text: "Abuse detection system — heuristic and AI-powered scanning to keep the platform clean" },
+      { type: "feature", text: "Admin panel — full oversight with reserved subdomains, reports, and system controls" },
+    ],
+  },
+  {
     version: "v2.1.0",
     date: "July 2, 2026",
     changes: [

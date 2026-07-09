@@ -4,6 +4,7 @@ import { Redis } from "@upstash/redis";
 const ALLOWED_ORIGINS = [
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   "http://localhost:3000",
+  "http://localhost:3001",
 ];
 
 const STATE_CHANGING_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
@@ -15,6 +16,7 @@ function isValidOrigin(req: NextRequest): boolean {
   const referer = req.headers.get("referer");
   const source = origin || referer || "";
   if (!source) return false;
+  if (/^https?:\/\/localhost(:\d+)?$/.test(source)) return true;
   return ALLOWED_ORIGINS.some((allowed) => source.startsWith(allowed));
 }
 
