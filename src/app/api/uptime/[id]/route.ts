@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/get-user-id";
-import { deleteMonitor, toggleMonitor, runCheck, getRecentChecks } from "@/lib/uptime";
+import { deleteMonitor, toggleMonitor, updateMonitor, runCheck, getRecentChecks } from "@/lib/uptime";
 import { supabase } from "@/lib/supabase";
 import { notify } from "@/lib/notifications";
 
@@ -17,9 +17,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const userId = await getUserId(req);
   if (!userId) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  const ok = await toggleMonitor(id, userId);
-  if (!ok) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
-  return NextResponse.json({ success: true });
+  try {
+    const body = await req.json();
+    const keys = Object.keys(body);
+    if (keys.length === 0 || (keys.length === 1 && keys[0] === "toggle")) {
+      const ok = await toggleMonitor(id, userId);
+      if (!ok) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+      return NextResponse.json({ success: true });
+    }
+    const allowed = ["label", "url", "check_interval", "timeout", "is_active"];
+    const fields: Record<string, unknown> = {};
+    for (const key of allowed) {
+      if (key in body) fields[key] = body[key];
+    }
+    const ok = await updateMonitor(id, userId, fields);
+    if (!ok) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+    return NextResponse.json({ success: true, fields });
+  } catch {
+    const ok = await toggleMonitor(id, userId);
+    if (!ok) return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+    return NextResponse.json({ success: true });
+  }
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -30,11 +30,11 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://sdk.cashfree.com https://pagead2.googlesyndication.com https://*.cloudflare.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://vercel.live https://*.google",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://sdk.cashfree.com https://pagead2.googlesyndication.com https://*.cloudflare.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://vercel.live https://ep2.adtrafficquality.google https://*.google",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' blob: data: https:",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://*.upstash.io https://api.cashfree.com https://sandbox.cashfree.com https://*.cloudflare.com https://vercel.live wss://*.vercel.live https://*.google.com https://*.doubleclick.net https://*.google https://*.g.doubleclick.net",
+    "connect-src 'self' https://*.upstash.io https://api.cashfree.com https://sandbox.cashfree.com https://*.cloudflare.com https://vercel.live wss://*.vercel.live https://*.google.com https://*.doubleclick.net https://ep2.adtrafficquality.google https://*.google https://*.g.doubleclick.net",
     "frame-src https://challenges.cloudflare.com https://vercel.live https://googleads.g.doubleclick.net https://*.google.com https://*.google",
     "frame-ancestors 'none'",
     "base-uri 'self'",

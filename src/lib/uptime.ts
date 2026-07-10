@@ -74,6 +74,19 @@ export async function createMonitor(
   return { success: true, data };
 }
 
+export async function updateMonitor(
+  id: string,
+  userId: string,
+  fields: Partial<Pick<MonitorRow, "label" | "url" | "check_interval" | "timeout" | "is_active">>
+): Promise<boolean> {
+  const { error } = await supabaseService
+    .from("uptime_monitors")
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("user_id", userId);
+  return !error;
+}
+
 export async function deleteMonitor(id: string, userId: string): Promise<boolean> {
   const { error } = await supabaseService
     .from("uptime_monitors")

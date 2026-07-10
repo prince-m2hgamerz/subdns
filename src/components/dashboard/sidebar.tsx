@@ -17,6 +17,8 @@ import {
   Zap,
   BarChart3,
   HeartPulse,
+  RefreshCw,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -24,10 +26,12 @@ import { useState } from "react";
 const links = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
   { href: "/dashboard/subdomains", icon: Globe, label: "Subdomains" },
+  { href: "/dashboard/ddns", icon: RefreshCw, label: "Dynamic DNS" },
   { href: "/dashboard/domains", icon: Globe, label: "Custom Domains" },
   { href: "/dashboard/activity", icon: Activity, label: "Activity" },
   { href: "/dashboard/analytics", icon: BarChart3, label: "DNS Analytics" },
   { href: "/dashboard/uptime", icon: HeartPulse, label: "Uptime" },
+  { href: "/dashboard/billing", icon: Receipt, label: "Billing" },
   { href: "/dashboard/api-keys", icon: Key, label: "API Keys" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
   { href: "/dashboard/upgrade", icon: Zap, label: "Upgrade" },

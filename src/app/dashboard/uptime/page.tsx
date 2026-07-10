@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { HeartPulse, Plus, Trash2, Play, Pause, ExternalLink, RefreshCw, Clock, Activity } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { HeartPulse, Plus, Trash2, Play, Pause, ExternalLink, RefreshCw, Clock, Activity, Pencil } from "lucide-react";
 
 interface Subdomain {
   id: string;
@@ -39,6 +40,10 @@ export default function UptimePage() {
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [createError, setCreateError] = useState("");
+
+  const [editingMonitor, setEditingMonitor] = useState<Monitor | null>(null);
+  const [editForm, setEditForm] = useState({ label: "", url: "", checkInterval: 5, timeout: 30, isActive: true });
+  const [saving, setSaving] = useState(false);
 
   const fetchMonitors = useCallback(() => {
     fetch("/api/uptime")
@@ -106,6 +111,27 @@ export default function UptimePage() {
     await fetch(`/api/uptime/${id}`, { method: "POST" });
     setCheckingId(null);
     fetchMonitors();
+  };
+
+  const handleEditOpen = (m: Monitor) => {
+    setEditingMonitor(m);
+    setEditForm({ label: m.label, url: m.url, checkInterval: m.checkInterval, timeout: m.timeout, isActive: m.isActive });
+  };
+
+  const handleEditSave = async () => {
+    if (!editingMonitor) return;
+    setSaving(true);
+    const res = await fetch(`/api/uptime/${editingMonitor.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editForm),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (data.success) {
+      setEditingMonitor(null);
+      fetchMonitors();
+    }
   };
 
   const daysAgo = (d: string) => {
@@ -218,6 +244,9 @@ export default function UptimePage() {
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleRunCheck(m.id)} disabled={isRunning} title="Run check">
                       <RefreshCw className={`h-4 w-4 ${isRunning ? "animate-spin" : ""}`} />
                     </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleEditOpen(m)} title="Edit">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleToggle(m.id)} title={m.isActive ? "Pause" : "Resume"}>
                       {m.isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </Button>
@@ -231,6 +260,38 @@ export default function UptimePage() {
           })}
         </div>
       )}
+      <Dialog open={!!editingMonitor} onOpenChange={(o) => { if (!o) setEditingMonitor(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Monitor</DialogTitle>
+            <DialogDescription>Update the monitor configuration</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Label</Label>
+              <Input value={editForm.label} onChange={(e) => setEditForm({ ...editForm, label: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>URL</Label>
+              <Input value={editForm.url} onChange={(e) => setEditForm({ ...editForm, url: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Check Interval (min)</Label>
+                <Input type="number" value={editForm.checkInterval} onChange={(e) => setEditForm({ ...editForm, checkInterval: Number(e.target.value) })} min={1} />
+              </div>
+              <div className="space-y-2">
+                <Label>Timeout (sec)</Label>
+                <Input type="number" value={editForm.timeout} onChange={(e) => setEditForm({ ...editForm, timeout: Number(e.target.value) })} min={5} max={120} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingMonitor(null)}>Cancel</Button>
+            <Button onClick={handleEditSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
