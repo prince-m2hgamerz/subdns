@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { createDnsRecord as cfCreate, detectDuplicateRecords, validateDnsRecord } from "@/lib/cloudflare";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
+import { requireAdmin } from "@/lib/admin-auth-guard";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: user } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", (session.user as { id: string }).id)
-    .single();
-
-  if (user?.role !== "ADMIN" && user?.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const auth = await requireAdmin();
+  if (!auth.allowed) return auth.response;
 
   const { data: records, error } = await supabase
     .from("dns_records")
@@ -34,20 +21,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: user } = await supabase
-    .from("users")
-    .select("role, id")
-    .eq("id", (session.user as { id: string }).id)
-    .single();
-
-  if (user?.role !== "ADMIN" && user?.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const auth = await requireAdmin();
+  if (!auth.allowed) return auth.response;
 
   const { subdomainId, type, name, content, ttl = 1, priority, proxied = false, service, protocol, weight, port, tag, flags } = await req.json();
 
@@ -121,7 +96,7 @@ export async function POST(req: NextRequest) {
     }
 
     await logActivity({
-      userId: user.id,
+      userId: auth.userId,
       event: "ADMIN_DNS_CREATED",
       metadata: { subdomainId, type, name, content },
       ip: req.headers.get("x-forwarded-for") ?? undefined,

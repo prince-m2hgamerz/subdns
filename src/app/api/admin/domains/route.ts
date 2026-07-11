@@ -1,26 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-
-async function checkAdmin() {
-  const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string })?.id;
-  if (!userId) return null;
-  const { data: admin } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", userId)
-    .single();
-  if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") return null;
-  return userId;
-}
+import { requireAdmin } from "@/lib/admin-auth-guard";
 
 export async function GET() {
-  const userId = await checkAdmin();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdmin();
+  if (!auth.allowed) return auth.response;
 
   const { data: domains } = await supabase
     .from("root_domains")
@@ -39,21 +23,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string })?.id;
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: admin } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", userId)
-    .single();
-
-  if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const auth = await requireAdmin();
+  if (!auth.allowed) return auth.response;
 
   const body = await req.json();
 

@@ -1,34 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { PLANS, type PlanId } from "@/lib/plans";
-
-async function checkAdmin(): Promise<NextResponse | null> {
-  const session = await getServerSession(authOptions);
-  const user = session?.user as { id?: string } | undefined;
-  if (!user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: admin } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  return null;
-}
+import { requireAdmin } from "@/lib/admin-auth-guard";
 
 const VALID_PLANS = ["BRONZE", "SILVER", "GOLD"] as const;
 
 export async function GET() {
-  const authError = await checkAdmin();
-  if (authError) return authError;
+  const auth = await requireAdmin();
+  if (!auth.allowed) return auth.response;
 
   const { data: rows } = await supabase
     .from("plan_configs")
@@ -53,8 +32,8 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const authError = await checkAdmin();
-  if (authError) return authError;
+  const auth = await requireAdmin();
+  if (!auth.allowed) return auth.response;
 
   const body = await req.json();
   const { planId, name, description, price, features } = body;

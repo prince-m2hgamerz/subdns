@@ -1,0 +1,4 @@
+curl -X POST -u ADJN6P:_2i9az-y3iwlnp \
+  -H "Content-Type: application/json" \
+  -d '{ "textMessage": { "text": "Hello, doctors!" }, "phoneNumbers": ["+918287811267", "+919818322072"] }' \
+  https://sms-api.m2hio.in/api/3rdparty/v1/message

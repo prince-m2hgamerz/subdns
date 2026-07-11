@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { camelCaseKeys } from "@/lib/transform";
+import { requireAdmin } from "@/lib/admin-auth-guard";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as { role?: string })?.role;
-
-  if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const auth = await requireAdmin();
+  if (!auth.allowed) return auth.response;
 
   const [
     { count: totalUsers },

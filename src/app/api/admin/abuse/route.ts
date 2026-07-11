@@ -1,25 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { logActivity } from "@/lib/activity";
+import { requireAdmin } from "@/lib/admin-auth-guard";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string })?.id;
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: admin } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", userId)
-    .single();
-
-  if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const auth = await requireAdmin();
+  if (!auth.allowed) return auth.response;
 
   const { searchParams } = new URL(req.url);
   const page = parseInt(searchParams.get("page") ?? "1");
@@ -60,21 +46,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string })?.id;
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: admin } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", userId)
-    .single();
-
-  if (admin?.role !== "ADMIN" && admin?.role !== "SUPER_ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const auth = await requireAdmin();
+  if (!auth.allowed) return auth.response;
 
   const { id, reviewStatus, reviewNote } = await req.json();
 
@@ -86,7 +59,7 @@ export async function PATCH(req: NextRequest) {
     .from("abuse_flags")
     .update({
       review_status: reviewStatus,
-      reviewer_id: userId,
+      reviewer_id: auth.userId,
       review_note: reviewNote ?? null,
       reviewed_at: new Date().toISOString(),
     })
@@ -97,7 +70,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   await logActivity({
-    userId,
+    userId: auth.userId,
     event: "SECURITY_EVENT",
     description: `Abuse flag ${reviewStatus}: ${id}`,
     metadata: { abuseFlagId: id, reviewStatus, reviewNote },
