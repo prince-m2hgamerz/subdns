@@ -26,7 +26,7 @@ export default function NewSubdomainPage() {
       .then((data) => {
         if (data.domains?.length) {
           setAvailableDomains(data.domains);
-          setDomain(data.domains[0]);
+          setDomain(data.defaultDomain ?? data.domains[0]);
         }
       })
       .catch(() => {});
