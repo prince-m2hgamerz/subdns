@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { getUserId } from "@/lib/get-user-id";
 
 const defaultPrefs = {
+  notify_by_sms: false,
   notify_on_subdomain_created: true,
   notify_on_dns_created: true,
   notify_on_dns_updated: true,

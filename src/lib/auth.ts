@@ -4,6 +4,7 @@ import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { supabase } from "./supabase";
+import { getCached, invalidateCache } from "./redis";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -18,8 +19,40 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        phone: { label: "Phone", type: "text" },
       },
       async authorize(credentials) {
+        if (credentials?.phone) {
+          const verified = await getCached<{ userId: string; role?: string }>(
+            `verified_phone:${credentials.phone}`
+          );
+          if (!verified) {
+            throw new Error("Phone not verified");
+          }
+          await invalidateCache(`verified_phone:${credentials.phone}`);
+
+          const { data: user } = await supabase
+            .from("users")
+            .select("*")
+            .eq("id", verified.userId)
+            .maybeSingle();
+
+          if (!user) {
+            throw new Error("User not found");
+          }
+          if (user.is_banned) {
+            throw new Error("Account suspended");
+          }
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+            phone: user.phone,
+          };
+        }
+
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and password required");
         }
@@ -53,6 +86,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role,
+          phone: user.phone,
         };
       },
     }),
@@ -97,6 +131,7 @@ export const authOptions: NextAuthOptions = {
         if (account?.provider === "credentials") {
           token.id = user.id;
           token.role = user.role;
+          token.phone = user.phone;
         } else if (user.email) {
           const { data: dbUser } = await supabase
             .from("users")
@@ -112,7 +147,7 @@ export const authOptions: NextAuthOptions = {
       if (token.id) {
         const { data: dbUser } = await supabase
           .from("users")
-          .select("role, is_banned, plan")
+          .select("role, is_banned, plan, phone, email, name")
           .eq("id", token.id as string)
           .single();
         if (!dbUser || dbUser.is_banned) {
@@ -120,6 +155,9 @@ export const authOptions: NextAuthOptions = {
         }
         token.role = dbUser.role;
         token.plan = dbUser.plan;
+        token.phone = dbUser.phone;
+        token.email = dbUser.email;
+        token.name = dbUser.name;
       }
       return token;
     },
@@ -128,6 +166,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
         (session.user as any).plan = token.plan;
+        (session.user as any).phone = token.phone;
       }
       return session;
     },

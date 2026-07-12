@@ -65,12 +65,13 @@ export default function NewSubdomainPage() {
         body: JSON.stringify({ name, target, type, proxied, domain }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Failed to create subdomain");
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `Failed to create subdomain (${res.status})`);
         return;
       }
+
+      const data = await res.json();
 
       router.push(`/dashboard/subdomains/${data.subdomain.id}`);
       router.refresh();

@@ -77,7 +77,7 @@ export function EditRecordForm({ record, subdomainName, onSaved, onCancel }: Pro
     setLoading(true);
     try {
       const res = await fetch(`/api/dns/${record.id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type,
@@ -89,8 +89,8 @@ export function EditRecordForm({ record, subdomainName, onSaved, onCancel }: Pro
         }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to update record");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to update record (${res.status})`);
       }
       toast({ title: "Record updated", variant: "success" });
       onSaved();

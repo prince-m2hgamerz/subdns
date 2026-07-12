@@ -7,7 +7,13 @@ const redis = process.env.REDIS_URL
     })
   : null;
 
-const cache = new Map<string, { data: string; expiry: number }>();
+const globalForCache = globalThis as unknown as {
+  __inMemoryCache?: Map<string, { data: string; expiry: number }>;
+};
+if (!globalForCache.__inMemoryCache) {
+  globalForCache.__inMemoryCache = new Map();
+}
+const cache = globalForCache.__inMemoryCache;
 
 const MEMORY_TTL = 60_000;
 
@@ -19,9 +25,15 @@ export async function getCached<T>(key: string): Promise<T | null> {
       return null;
     }
   }
+  console.log(`[cache GET] key=${key} cache.size=${cache.size} hasKey=${cache.has(key)}`);
   const item = cache.get(key);
   if (item && Date.now() < item.expiry) {
-    return JSON.parse(item.data) as T;
+    const parsed = JSON.parse(item.data) as T;
+    console.log(`[cache GET] FOUND key=${key} expiry=${item.expiry} now=${Date.now()} valid=true`);
+    return parsed;
+  }
+  if (item) {
+    console.log(`[cache GET] EXPIRED key=${key} expiry=${item.expiry} now=${Date.now()}`);
   }
   cache.delete(key);
   return null;
@@ -40,6 +52,7 @@ export async function setCache<T>(
 
     }
   }
+  console.log(`[cache SET] key=${key} cache.size=${cache.size}`);
   cache.set(key, {
     data: JSON.stringify(data),
     expiry: Date.now() + ttlSeconds * 1000,

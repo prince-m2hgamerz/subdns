@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Smartphone } from "lucide-react";
 
 const eventLabels: Record<string, string> = {
   notify_on_subdomain_created: "Subdomain Created",
@@ -30,6 +32,8 @@ const eventDescriptions: Record<string, string> = {
 };
 
 export default function NotificationSettingsPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [prefs, setPrefs] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -99,6 +103,42 @@ export default function NotificationSettingsPage() {
               />
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Smartphone className="h-5 w-5" /> SMS Notifications</CardTitle>
+          <CardDescription>
+            {session?.user?.phone
+              ? `SMS will be sent to ${session.user.phone} for each event type you enable above.`
+              : "Set your phone number in Settings to receive SMS notifications."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!session?.user?.phone && (
+            <div className="rounded-lg border border-dashed p-4 text-center">
+              <p className="mb-2 text-sm text-muted-foreground">No phone number on file</p>
+              <Button variant="outline" onClick={() => router.push("/dashboard/settings")}>
+                Add Phone Number
+              </Button>
+            </div>
+          )}
+          {session?.user?.phone && (
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="notify_by_sms" className="cursor-pointer font-medium">Receive SMS notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Send SMS alerts for all enabled events ({session.user.phone})
+                </p>
+              </div>
+              <Switch
+                id="notify_by_sms"
+                checked={prefs["notify_by_sms"] ?? false}
+                onCheckedChange={() => handleToggle("notify_by_sms")}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 

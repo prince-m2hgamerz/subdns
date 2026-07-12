@@ -45,8 +45,30 @@ export function DnsRecordRow({
   const [propResult, setPropResult] = useState<{ resolved: boolean; ips: string[]; cloudflare: boolean } | null>(null);
   const [propError, setPropError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   const isProxiable = PROXIABLE.includes(record.type);
+
+  const handleProxyToggle = async () => {
+    setToggling(true);
+    try {
+      const res = await fetch(`/api/dns/${record.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proxied: !record.proxied }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Failed to toggle proxy (${res.status})`);
+      }
+      toast({ title: "Proxy updated", variant: "success" });
+      onEdit();
+    } catch (e) {
+      toast({ title: "Error", description: e instanceof Error ? e.message : "Could not toggle proxy", variant: "destructive" });
+    } finally {
+      setToggling(false);
+    }
+  };
 
   const doCopy = async () => {
     await navigator.clipboard.writeText(record.content);
@@ -72,8 +94,11 @@ export function DnsRecordRow({
     setPropResult(null);
     try {
       const res = await fetch(`/api/dns/${record.id}/propagation?domain=${encodeURIComponent(domain)}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Propagation check failed (${res.status})`);
+      }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Propagation check failed");
       setPropResult(data);
     } catch (e) {
       setPropError(e instanceof Error ? e.message : "Could not check propagation");
@@ -103,12 +128,12 @@ export function DnsRecordRow({
               {isProxiable && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge variant={record.proxied ? "default" : "outline"} className={`font-mono text-[10px] px-1.5 py-0 cursor-default ${record.proxied ? "" : "opacity-60"}`}>
-                      {record.proxied ? "Proxied" : "DNS only"}
+                    <Badge variant={record.proxied ? "default" : "outline"} className={`font-mono text-[10px] px-1.5 py-0 cursor-pointer ${record.proxied ? "" : "opacity-60"}`} onClick={handleProxyToggle}>
+                      {toggling ? "..." : record.proxied ? "Proxied" : "DNS only"}
                     </Badge>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    {record.proxied ? "Traffic proxied through Cloudflare" : "DNS resolution only"}
+                    Click to toggle — {record.proxied ? "currently proxied through Cloudflare" : "currently DNS resolution only"}
                   </TooltipContent>
                 </Tooltip>
               )}

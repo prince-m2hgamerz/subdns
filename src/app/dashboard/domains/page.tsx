@@ -87,8 +87,8 @@ export default function CustomDomainsPage() {
         setShowAddForm(false);
         await fetchDomains();
       } else {
-        const data = await res.json();
-        alert(data.error || "Failed to add domain");
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || `Failed to add domain (${res.status})`);
       }
     } finally {
       setAdding(false);
@@ -104,8 +104,8 @@ export default function CustomDomainsPage() {
       if (res.ok) {
         await fetchDomains();
       } else {
-        const data = await res.json();
-        alert(data.error || "Verification failed");
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || `Verification failed (${res.status})`);
         await fetchDomains();
       }
     } finally {

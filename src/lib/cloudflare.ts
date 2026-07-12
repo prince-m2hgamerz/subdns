@@ -32,7 +32,14 @@ async function cfFetch<T>(
     },
   });
 
-  const data = await res.json();
+  let data: CfResponse<T>;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(
+      `Cloudflare API error (${res.status} ${res.statusText}): Non-JSON response`
+    );
+  }
 
   if (!data.success) {
     throw new Error(
@@ -40,7 +47,7 @@ async function cfFetch<T>(
     );
   }
 
-  return data as CfResponse<T>;
+  return data;
 }
 
 export interface DnsRecord {

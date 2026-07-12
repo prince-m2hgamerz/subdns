@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Terminal } from "lucide-react";
@@ -34,6 +34,86 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+
+  const [loginMode, setLoginMode] = useState<"email" | "phone">("email");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [phoneAvailable, setPhoneAvailable] = useState<boolean | null>(null);
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/auth/phone/health")
+      .then((r) => r.json())
+      .then((d) => setPhoneAvailable(d.available))
+      .catch(() => setPhoneAvailable(false));
+  }, []);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setInterval(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearInterval(id);
+  }, [resendCooldown]);
+
+  const handleSendOtp = async () => {
+    setPhoneError("");
+    if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
+      setPhoneError("Enter a valid number with country code (e.g., +911234567890)");
+      return;
+    }
+    setPhoneLoading(true);
+    try {
+      const res = await fetch("/api/auth/phone/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPhoneError(data.error || "Failed to send OTP");
+        return;
+      }
+      setOtpSent(true);
+      setResendCooldown(30);
+    } catch {
+      setPhoneError("Failed to send OTP");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setPhoneError("");
+    if (!otp || otp.length < 6) {
+      setPhoneError("Enter the 6-digit OTP");
+      return;
+    }
+    setPhoneLoading(true);
+    try {
+      const res = await fetch("/api/auth/phone/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPhoneError(data.error || "Invalid OTP");
+        return;
+      }
+      const result = await signIn("credentials", { phone, redirect: false });
+      if (result?.error) {
+        setPhoneError(result.error);
+        return;
+      }
+      window.location.href = "/dashboard";
+    } catch {
+      setPhoneError("Verification failed");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,47 +207,154 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+          {phoneAvailable !== null && (
+            <div className="mb-4 flex rounded-lg border p-0.5">
+              <button
+                type="button"
+                onClick={() => setLoginMode("email")}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  loginMode === "email"
+                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                    : "text-neutral-550 hover:text-neutral-900"
+                }`}
+              >
+                Email
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginMode("phone")}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  loginMode === "phone"
+                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                    : "text-neutral-550 hover:text-neutral-900"
+                }`}
+              >
+                Phone
+              </button>
             </div>
+          )}
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Password</label>
-                <Link
-                  href="/auth/reset-password"
-                  className="text-xs text-neutral-550 hover:text-neutral-900 cursor-pointer"
-                >
-                  Forgot password?
-                </Link>
+          {loginMode === "email" ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email</label>
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
 
-            <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Password</label>
+                  <Link
+                    href="/auth/reset-password"
+                    className="text-xs text-neutral-550 hover:text-neutral-900 cursor-pointer"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              {phoneError && (
+                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
+                  {phoneError}
+                </div>
+              )}
+
+              {!otpSent ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Phone Number</label>
+                  <Input
+                    type="tel"
+                    placeholder="+919999999999"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                  <p className="text-xs text-neutral-550">
+                    Include country code (e.g., +91 for India)
+                  </p>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    className="w-full"
+                    disabled={phoneLoading}
+                    onClick={handleSendOtp}
+                  >
+                    {phoneLoading ? "Sending..." : "Send OTP"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Enter OTP</label>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="123456"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  />
+                  <p className="text-xs text-neutral-550">
+                    A 6-digit code was sent to {phone}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    className="w-full"
+                    disabled={phoneLoading}
+                    onClick={handleVerifyOtp}
+                  >
+                    {phoneLoading ? "Verifying..." : "Sign In"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOtpSent(false);
+                      setOtp("");
+                      setPhoneError("");
+                      setResendCooldown(0);
+                    }}
+                    className="w-full text-center text-xs text-neutral-550 hover:text-neutral-900"
+                  >
+                    Change phone number
+                  </button>
+                  <button
+                    type="button"
+                    disabled={resendCooldown > 0 || phoneLoading}
+                    onClick={() => handleSendOtp()}
+                    className="w-full text-center text-xs text-neutral-550 hover:text-neutral-900 disabled:text-neutral-400 disabled:cursor-not-allowed"
+                  >
+                    {resendCooldown > 0
+                      ? `Resend OTP in ${resendCooldown}s`
+                      : "Resend OTP"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <p className="mt-6 text-center text-sm text-neutral-550">
             Don&apos;t have an account?{" "}

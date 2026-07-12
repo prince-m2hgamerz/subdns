@@ -175,11 +175,13 @@ export default function AdminDnsPage() {
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Failed to create record");
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `Failed to create record (${res.status})`);
         return;
       }
+
+      const data = await res.json();
 
       setRecords((prev) => [data.record, ...prev]);
       setShowForm(false);

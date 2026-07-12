@@ -23,12 +23,27 @@ import {
 import { signOut } from "next-auth/react";
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, status, update } = useSession();
   const [name, setName] = useState(session?.user?.name || "");
+  const [email, setEmail] = useState(session?.user?.email || "");
+  const [phone, setPhone] = useState(session?.user?.phone || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [emailSaved, setEmailSaved] = useState(false);
+  const [error, setError] = useState("");
+  const [phoneSaved, setPhoneSaved] = useState(false);
   const [currentPlanId, setCurrentPlanId] = useState<PlanId | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
+
+  const isPhoneUser = !!session?.user?.phone;
+
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      setName(session?.user?.name || "");
+      setEmail(session?.user?.email || "");
+      setPhone(session?.user?.phone || "");
+    }
+  }, [status, session]);
 
   useEffect(() => {
     fetch("/api/user/plan")
@@ -42,20 +57,35 @@ export default function SettingsPage() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError("");
 
     try {
+      const body: Record<string, string> = { name, phone };
+      if (isPhoneUser && email !== session?.user?.email) {
+        body.email = email;
+      }
+
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(body),
       });
 
       if (res.ok) {
+        update();
+        setName(name);
+        setEmail(email);
+        setPhone(phone);
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        setEmailSaved(true);
+        setPhoneSaved(!!phone);
+        setTimeout(() => { setSaved(false); setEmailSaved(false); setPhoneSaved(false); }, 3000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Something went wrong");
       }
     } catch {
-      // ignore
+      setError("Something went wrong");
     } finally {
       setSaving(false);
     }
@@ -106,16 +136,39 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
+              <label className="text-sm font-medium">Phone Number</label>
               <Input
-                value={session?.user?.email || ""}
-                disabled
-                className="cursor-not-allowed opacity-60"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1234567890"
               />
               <p className="text-xs text-muted-foreground">
-                Email cannot be changed
+                Used for SMS notifications
               </p>
             </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email</label>
+              <Input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={!isPhoneUser}
+                className={!isPhoneUser ? "cursor-not-allowed opacity-60" : ""}
+              />
+              {isPhoneUser ? (
+                <p className="text-xs text-muted-foreground">
+                  {emailSaved ? "Email updated!" : "Set your email address to enable email notifications"}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Email cannot be changed
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
 
             <Button type="submit" variant="primary" disabled={saving}>
               {saving ? "Saving..." : saved ? "Saved!" : "Update Profile"}

@@ -8,7 +8,7 @@ import {
 import { logActivity } from "@/lib/activity";
 
 function detectIp(req: NextRequest, myip?: string): string | null {
-  if (myip) return myip;
+  if (myip && myip !== "AUTO") return myip;
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   const realIp = req.headers.get("x-real-ip");
@@ -16,11 +16,27 @@ function detectIp(req: NextRequest, myip?: string): string | null {
   return null;
 }
 
+function parseBasicAuth(header: string): string | null {
+  const match = header.match(/^Basic\s+(.+)$/i);
+  if (!match) return null;
+  try {
+    const decoded = Buffer.from(match[1], "base64").toString("utf-8");
+    const [, password] = decoded.split(":");
+    return password || null;
+  } catch {
+    return null;
+  }
+}
+
 async function authenticate(
   req: NextRequest
 ): Promise<{ userId: string | null; error?: string }> {
-  let key =
-    req.headers.get("authorization")?.replace("Bearer ", "").trim() || "";
+  const authHeader = req.headers.get("authorization") || "";
+  let key = authHeader.replace("Bearer ", "").trim();
+
+  if (!key && authHeader.startsWith("Basic ")) {
+    key = parseBasicAuth(authHeader) || "";
+  }
 
   if (!key) {
     const url = new URL(req.url);

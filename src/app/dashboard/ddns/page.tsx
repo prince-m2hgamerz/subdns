@@ -136,7 +136,7 @@ export default function DdnsPage() {
                           Replace <code className="rounded bg-muted px-1 py-0.5">YOUR_API_KEY</code> with your key.
                         </p>
                         <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs">
-                          {`curl -s "https://subdns.app/api/ddns/update?hostname=${sub.fullDomain}&myip=AUTO" \\
+                          {`curl -s "https://subdns.m2hio.in/api/ddns/update?hostname=${sub.fullDomain}&myip=AUTO" \\
   -H "Authorization: Bearer ${keys[0].key}"`}
                         </pre>
                         <Button
@@ -145,7 +145,7 @@ export default function DdnsPage() {
                           className="gap-2"
                           onClick={() =>
                             copyToClipboard(
-                              `curl -s "https://subdns.app/api/ddns/update?hostname=${sub.fullDomain}&myip=AUTO" -H "Authorization: Bearer ${keys[0].key}"`,
+                              `curl -s "https://subdns.m2hio.in/api/ddns/update?hostname=${sub.fullDomain}&myip=AUTO" -H "Authorization: Bearer ${keys[0].key}"`,
                               `curl-${sub.id}`
                             )
                           }
@@ -172,7 +172,7 @@ export default function DdnsPage() {
 ssl=yes
 protocol=dyndns2
 use=web, web=checkip.amazonaws.com/
-server=subdns.app/api/ddns/update
+server=subdns.m2hio.in
 login=${keys[0].key}
 password=${keys[0].key}
 ${sub.fullDomain}`}
@@ -183,7 +183,7 @@ ${sub.fullDomain}`}
                           className="gap-2"
                           onClick={() =>
                             copyToClipboard(
-                              `daemon=300\nssl=yes\nprotocol=dyndns2\nuse=web, web=checkip.amazonaws.com/\nserver=subdns.app/api/ddns/update\nlogin=${keys[0].key}\npassword=${keys[0].key}\n${sub.fullDomain}`,
+                              `daemon=300\nssl=yes\nprotocol=dyndns2\nuse=web, web=checkip.amazonaws.com/\nserver=subdns.m2hio.in\nlogin=${keys[0].key}\npassword=${keys[0].key}\n${sub.fullDomain}`,
                               `ddclient-${sub.id}`
                             )
                           }
@@ -210,7 +210,7 @@ ${sub.fullDomain}`}
 provider default {
   ssl = true
   protocol = dyndns2
-  ddns-server = subdns.app
+  ddns-server = subdns.m2hio.in
   ddns-path = /api/ddns/update
   username = ${keys[0].key}
   password = ${keys[0].key}
@@ -223,7 +223,7 @@ provider default {
                           className="gap-2"
                           onClick={() =>
                             copyToClipboard(
-                              `period = 300\nprovider default {\n  ssl = true\n  protocol = dyndns2\n  ddns-server = subdns.app\n  ddns-path = /api/ddns/update\n  username = ${keys[0].key}\n  password = ${keys[0].key}\n  hostname = ${sub.fullDomain}\n}`,
+                              `period = 300\nprovider default {\n  ssl = true\n  protocol = dyndns2\n  ddns-server = subdns.m2hio.in\n  ddns-path = /api/ddns/update\n  username = ${keys[0].key}\n  password = ${keys[0].key}\n  hostname = ${sub.fullDomain}\n}`,
                               `inadyn-${sub.id}`
                             )
                           }
@@ -256,7 +256,7 @@ provider default {
           <div>
             <p className="mb-1 text-xs text-muted-foreground">POST /api/ddns/update</p>
             <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs">
-{`curl -X POST "https://subdns.app/api/ddns/update" \\
+{`curl -X POST "https://subdns.m2hio.in/api/ddns/update" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"hostname": "myhost.example.com", "myip": "1.2.3.4", "type": "A"}'`}
@@ -282,7 +282,7 @@ provider default {
             className="gap-2"
             onClick={() =>
               copyToClipboard(
-                `https://subdns.app/api/ddns/update`,
+                `https://subdns.m2hio.in/api/ddns/update`,
                 "endpoint"
               )
             }

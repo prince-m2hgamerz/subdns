@@ -90,8 +90,8 @@ export function AddRecordForm({
         }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to add record");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to add record (${res.status})`);
       }
       toast({ title: "Record added", variant: "success" });
       setContent("");
