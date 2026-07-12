@@ -10,6 +10,7 @@ const ALLOWED_ORIGINS = [
 const STATE_CHANGING_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
 
 const AUTH_API_PREFIX = "/api/auth/";
+const CSRF_BYPASS_PREFIXES = ["/api/auth/", "/api/ddns/", "/api/nic/"];
 
 function isValidOrigin(req: NextRequest): boolean {
   const origin = req.headers.get("origin");
@@ -58,7 +59,7 @@ export async function middleware(req: NextRequest) {
 
   const stateChangingApi =
     path.startsWith("/api/") &&
-    !path.startsWith(AUTH_API_PREFIX) &&
+    !CSRF_BYPASS_PREFIXES.some((p) => path.startsWith(p)) &&
     STATE_CHANGING_METHODS.includes(req.method);
 
   if (stateChangingApi && !isValidOrigin(req)) {

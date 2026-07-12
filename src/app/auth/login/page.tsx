@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CountryCodeSelect } from "@/components/auth/country-code-select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LiquidChrome } from "@/components/ui/liquid-chrome";
 
@@ -36,7 +37,8 @@ export default function LoginPage() {
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
   const [loginMode, setLoginMode] = useState<"email" | "phone">("email");
-  const [phone, setPhone] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+91");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [phoneAvailable, setPhoneAvailable] = useState<boolean | null>(null);
@@ -59,7 +61,8 @@ export default function LoginPage() {
 
   const handleSendOtp = async () => {
     setPhoneError("");
-    if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
+    const fullPhone = `${phoneCountryCode}${phoneNumber}`;
+    if (!/^\+[1-9]\d{6,14}$/.test(fullPhone)) {
       setPhoneError("Enter a valid number with country code (e.g., +911234567890)");
       return;
     }
@@ -68,7 +71,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/phone/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone: fullPhone }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -86,6 +89,7 @@ export default function LoginPage() {
 
   const handleVerifyOtp = async () => {
     setPhoneError("");
+    const fullPhone = `${phoneCountryCode}${phoneNumber}`;
     if (!otp || otp.length < 6) {
       setPhoneError("Enter the 6-digit OTP");
       return;
@@ -95,14 +99,14 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/phone/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp }),
+        body: JSON.stringify({ phone: fullPhone, otp }),
       });
       const data = await res.json();
       if (!res.ok) {
         setPhoneError(data.error || "Invalid OTP");
         return;
       }
-      const result = await signIn("credentials", { phone, redirect: false });
+      const result = await signIn("credentials", { phone: fullPhone, redirect: false });
       if (result?.error) {
         setPhoneError(result.error);
         return;
@@ -287,15 +291,19 @@ export default function LoginPage() {
               {!otpSent ? (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Phone Number</label>
-                  <Input
-                    type="tel"
-                    placeholder="+919999999999"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                  <p className="text-xs text-neutral-550">
-                    Include country code (e.g., +91 for India)
-                  </p>
+                  <div className="flex gap-2">
+                    <CountryCodeSelect
+                      value={phoneCountryCode}
+                      onChange={setPhoneCountryCode}
+                    />
+                    <Input
+                      type="tel"
+                      placeholder="9999999999"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+                      className="flex-1"
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="primary"
@@ -318,7 +326,7 @@ export default function LoginPage() {
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   />
                   <p className="text-xs text-neutral-550">
-                    A 6-digit code was sent to {phone}
+                    A 6-digit code was sent to {phoneCountryCode}{phoneNumber}
                   </p>
                   <Button
                     type="button"
@@ -334,6 +342,8 @@ export default function LoginPage() {
                     onClick={() => {
                       setOtpSent(false);
                       setOtp("");
+                      setPhoneCountryCode("+91");
+                      setPhoneNumber("");
                       setPhoneError("");
                       setResendCooldown(0);
                     }}
