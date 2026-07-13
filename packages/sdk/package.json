@@ -1,0 +1,41 @@
+{
+  "name": "@subdns/sdk",
+  "version": "0.1.2",
+  "description": "Official SubDNS TypeScript SDK — manage subdomains, DNS records, API keys, webhooks, and more.",
+  "license": "MIT",
+  "author": "SubDNS",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prince-m2hgamerz/subdns"
+  },
+  "keywords": [
+    "subdns",
+    "dns",
+    "subdomain",
+    "api",
+    "sdk"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

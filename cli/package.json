@@ -1,6 +1,6 @@
 {
   "name": "@subdns/cli",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "CLI for SubDNS — claim your corner of the internet, manage subdomains and DNS records from the terminal.",
   "bin": {
     "subdns": "dist/index.js"
@@ -11,6 +11,10 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prince-m2hgamerz/subdns.git"
   },
   "keywords": [
     "subdns",
