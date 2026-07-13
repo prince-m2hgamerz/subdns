@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { createDnsRecord } from "@/lib/cloudflare";
+import { createDnsRecord, deleteDnsRecord } from "@/lib/cloudflare";
 import { logActivity } from "@/lib/activity";
 import { isValidSubdomain, isReservedName } from "@/lib/utils";
 import { getUserId } from "@/lib/get-user-id";
 import { camelCaseKeys } from "@/lib/transform";
 import { getPlan } from "@/lib/plans";
 import { checkPlanAccess } from "@/lib/subscription";
-import { getSettings } from "@/lib/settings-store";
 import {
   scoreSubdomainName,
   checkAbuseVelocity,
   scoreTargetDomain,
   computeVerdict,
 } from "@/lib/abuse-detection";
+import { getSettings } from "@/lib/settings-store";
 import { classifyAbuse } from "@/lib/abuse-llm";
 import { notify } from "@/lib/notifications";
+import { validateNameservers } from "@/lib/validate-nameservers";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req);
@@ -29,7 +30,15 @@ export async function GET(req: NextRequest) {
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  return NextResponse.json({ subdomains: camelCaseKeys(subdomains) });
+  return NextResponse.json({
+    subdomains: (subdomains ?? []).map((s) => ({
+      ...camelCaseKeys(s),
+      nameservers:
+        typeof s.nameservers === "string"
+          ? JSON.parse(s.nameservers)
+          : s.nameservers,
+    })),
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -38,10 +47,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, target, type = "CNAME", proxied = false, domain } = await req.json();
+  const { name, target, type = "CNAME", proxied = false, domain, dnsMode = "STANDARD", nameservers: rawNameservers } = await req.json();
+  let nameservers = rawNameservers;
 
-  if (!name || !target) {
-    return NextResponse.json({ error: "Name and target are required" }, { status: 400 });
+  if (!name) {
+    return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  }
+
+  if (dnsMode === "DELEGATED") {
+    const nsResult = validateNameservers(nameservers);
+    if (!nsResult.ok) {
+      return NextResponse.json({ error: nsResult.error }, { status: 400 });
+    }
+    nameservers = nsResult.nameservers;
+  } else if (!target) {
+    return NextResponse.json({ error: "Target is required" }, { status: 400 });
   }
 
   if (!domain) {
@@ -108,6 +128,22 @@ export async function POST(req: NextRequest) {
   const access = await checkPlanAccess(userId, plan.id);
   if (!access.ok) {
     return NextResponse.json({ error: access.error }, { status: 403 });
+  }
+
+  const kycRequired = subSettings.requireKyc === "true";
+  if (kycRequired) {
+    const { data: kyc } = await supabase
+      .from("kyc_verifications")
+      .select("verification_status")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!kyc || kyc.verification_status === "rejected") {
+      return NextResponse.json(
+        { error: "KYC verification is required before creating subdomains. Please complete verification in your account settings." },
+        { status: 403 }
+      );
+    }
   }
 
   const limit = user?.plan === "BRONZE" || !user?.plan
@@ -234,15 +270,33 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const cfRecord = await createDnsRecord({
-      type,
-      name,
-      content: target,
-      proxied,
-      ttl: 1,
-    }, zoneId);
+    const isDelegated = dnsMode === "DELEGATED";
 
-    const cfId = cfRecord.result?.id ?? "";
+    let cfId = "";
+    let nsCloudflareIds: string[] = [];
+
+    if (isDelegated) {
+      for (const ns of nameservers) {
+        const cfRecord = await createDnsRecord({
+          type: "NS",
+          name,
+          content: ns,
+          ttl: 3600,
+        }, zoneId);
+        if (cfRecord.result?.id) {
+          nsCloudflareIds.push(cfRecord.result.id);
+        }
+      }
+    } else {
+      const cfRecord = await createDnsRecord({
+        type,
+        name,
+        content: target,
+        proxied,
+        ttl: 1,
+      }, zoneId);
+      cfId = cfRecord.result?.id ?? "";
+    }
 
     const { data: subdomain } = await supabase
       .from("subdomains")
@@ -250,9 +304,11 @@ export async function POST(req: NextRequest) {
         name,
         domain,
         full_domain: `${name}.${domain}`,
-        target,
-        type,
-        proxied,
+        target: isDelegated ? null : target,
+        type: isDelegated ? "NS" : type,
+        proxied: isDelegated ? false : proxied,
+        dns_mode: dnsMode,
+        nameservers: isDelegated ? JSON.stringify(nameservers) : null,
         status: "ACTIVE",
         cloudflare_id: cfId,
         user_id: userId,
@@ -264,7 +320,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to create subdomain" }, { status: 500 });
     }
 
-    if (cfId) {
+    if (isDelegated) {
+      for (const nsId of nsCloudflareIds) {
+        await supabase
+          .from("dns_records")
+          .insert({
+            type: "NS",
+            name,
+            content: nameservers[nsCloudflareIds.indexOf(nsId)],
+            ttl: 3600,
+            proxied: false,
+            status: "ACTIVE",
+            cloudflare_id: nsId,
+            subdomain_id: subdomain.id,
+          });
+      }
+    } else if (cfId) {
       await supabase
         .from("dns_records")
         .insert({
@@ -288,12 +359,12 @@ export async function POST(req: NextRequest) {
     await logActivity({
       userId,
       event: "SUBDOMAIN_CREATED",
-      metadata: { name, domain, target, type, proxied, abuseFlagId: abuseFlagId ?? undefined },
+      metadata: { name, domain, target, type, proxied, dnsMode, abuseFlagId: abuseFlagId ?? undefined },
       ip: req.headers.get("x-forwarded-for") ?? undefined,
       userAgent: req.headers.get("user-agent") ?? undefined,
     });
 
-    try { await notify(userId, "subdomain_created", { name, domain, target }); } catch {}
+    try { await notify(userId, "subdomain_created", { name, domain, target, dnsMode }); } catch {}
 
     return NextResponse.json({ subdomain: camelCaseKeys(subdomainWithRecords) }, { status: 201 });
   } catch (error) {

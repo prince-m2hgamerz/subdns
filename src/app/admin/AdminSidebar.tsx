@@ -12,6 +12,7 @@ import {
   Activity,
   Settings,
   Shield,
+  ShieldCheck,
   ShieldAlert,
   LifeBuoy,
   Menu,
@@ -39,6 +40,7 @@ const navItems = [
   { href: "/admin/abuse", label: "Abuse", icon: ShieldAlert },
   { href: "/admin/contact", label: "Contact", icon: LifeBuoy },
   { href: "/admin/reports", label: "Reports", icon: Bug },
+  { href: "/verify", label: "Certificate Verify", icon: ShieldCheck },
 ];
 
 export default function AdminSidebar({

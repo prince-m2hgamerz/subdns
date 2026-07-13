@@ -4,9 +4,10 @@ export interface SubdomainWithRecords {
   domain: string;
   fullDomain: string;
   target: string | null;
+  dnsMode: "STANDARD" | "DELEGATED";
+  nameservers: string[] | null;
   status: "ACTIVE" | "SUSPENDED" | "PENDING";
   proxied: boolean;
-  sslStatus: string | null;
   dnsStatus: string | null;
   isFavorite: boolean;
   userId: string;
@@ -17,7 +18,7 @@ export interface SubdomainWithRecords {
 
 export interface DnsRecordItem {
   id: string;
-  type: "A" | "AAAA" | "CNAME" | "TXT" | "MX" | "SRV" | "CAA";
+  type: "A" | "AAAA" | "CNAME" | "NS" | "TXT" | "MX" | "SRV" | "CAA";
   name: string;
   value: string;
   ttl: number;
@@ -117,4 +118,33 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   page: number;
   perPage: number;
   totalPages: number;
+}
+
+export interface CertificateRecord {
+  id: string;
+  certId: string;
+  ownerName: string;
+  ownerEmail: string | null;
+  subdomainId: string;
+  subdomainName: string;
+  domain: string;
+  fullDomain: string;
+  target: string | null;
+  status: string;
+  dnsMode: string;
+  signature: string;
+  issuedAt: string;
+  createdAt: string;
+}
+
+export interface CertificatePayload {
+  subdomain: string;
+  domain: string;
+  fullDomain: string;
+  target: string | null;
+  status: string;
+  dnsMode: string;
+  ownerId: string;
+  issuedAt: string;
+  issuer: string;
 }

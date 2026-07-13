@@ -13,6 +13,8 @@ type Subdomain = {
   name: string;
   domain: string;
   target: string;
+  dns_mode: string;
+  nameservers: string[] | null;
   proxied: boolean;
   status: string;
   created_at: string;
@@ -70,12 +72,16 @@ export default async function SubdomainsPage() {
                       {sub.name}.{sub.domain}
                     </p>
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                      {sub.target} &middot; {sub.dns_records?.length ?? 0} records
+                      {sub.dns_mode === "DELEGATED"
+                        ? `${sub.nameservers?.length ?? 0} nameservers`
+                        : `${sub.target} \u00B7 ${sub.dns_records?.length ?? 0} records`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {sub.proxied && (
-                      <Badge variant="outline">Proxied</Badge>
+                    {sub.dns_mode === "DELEGATED" ? (
+                      <Badge variant="info">Delegated</Badge>
+                    ) : (
+                      sub.proxied && <Badge variant="outline">Proxied</Badge>
                     )}
                     <Badge
                       variant={sub.status === "ACTIVE" ? "success" : "outline"}

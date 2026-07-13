@@ -178,6 +178,13 @@ export function Navbar() {
               Contact
               <span className="absolute bottom-1 left-3 h-px w-[calc(100%-1.5rem)] scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
             </Link>
+            <Link
+              href="/verify"
+              className="group relative cursor-pointer rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
+            >
+              Verify
+              <span className="absolute bottom-1 left-3 h-px w-[calc(100%-1.5rem)] scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
+            </Link>
           </div>
         </div>
 
@@ -269,6 +276,13 @@ export function Navbar() {
                   className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-gray-100"
                 >
                   Contact
+                </Link>
+                <Link
+                  href="/verify"
+                  onClick={() => setOpen(false)}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-gray-100"
+                >
+                  Verify
                 </Link>
               </div>
             </div>

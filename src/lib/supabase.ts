@@ -5,6 +5,7 @@ const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE!;
 const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_ANON_PUBLIC ||
   "";
 
 if (!supabaseUrl) throw new Error("Missing SUPABASE_URL");

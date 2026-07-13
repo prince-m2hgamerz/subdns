@@ -21,6 +21,7 @@ async function main() {
     `);
     console.log('Existing tables:', tables.rows.map(r => r.table_name));
 
+    await client.query('DROP TABLE IF EXISTS certificates CASCADE');
     await client.query('DROP TABLE IF EXISTS dns_records CASCADE');
     await client.query('DROP TABLE IF EXISTS subscriptions CASCADE');
     await client.query('DROP TABLE IF EXISTS plan_configs CASCADE');
@@ -158,6 +159,23 @@ async function main() {
         zone_id TEXT NOT NULL,
         is_active BOOLEAN NOT NULL DEFAULT true,
         is_default BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE certificates (
+        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        cert_id TEXT UNIQUE NOT NULL,
+        owner_name TEXT NOT NULL,
+        owner_email TEXT,
+        subdomain_id TEXT NOT NULL REFERENCES subdomains(id),
+        subdomain_name TEXT NOT NULL,
+        domain TEXT NOT NULL,
+        full_domain TEXT NOT NULL,
+        target TEXT,
+        status TEXT NOT NULL,
+        dns_mode TEXT NOT NULL,
+        signature TEXT NOT NULL,
+        issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `);

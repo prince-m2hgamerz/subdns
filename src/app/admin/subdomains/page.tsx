@@ -8,6 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+type KYCInfo = {
+  fullName: string;
+  phone: string;
+  address: string;
+  purpose: string;
+  status: string;
+  verifiedAt: string | null;
+};
+
 type Subdomain = {
   id: string;
   name: string;
@@ -17,6 +26,7 @@ type Subdomain = {
   createdAt: string;
   _count: { dnsRecords: number };
   user: { id: string; name: string | null; email: string };
+  kyc: KYCInfo | null;
 };
 
 type StatusCounts = { total: number; active: number; suspended: number; pending: number };
@@ -28,6 +38,12 @@ const statusVariant: Record<string, "success" | "destructive" | "warning" | "def
 };
 
 const statusOptions: Subdomain["status"][] = ["ACTIVE", "SUSPENDED", "PENDING"];
+
+const kycStatusVariant: Record<string, "success" | "destructive" | "warning" | "outline"> = {
+  APPROVED: "success",
+  REJECTED: "destructive",
+  PENDING: "warning",
+};
 
 export default function AdminSubdomainsPage() {
   const { data: session, status: authStatus } = useSession();
@@ -169,6 +185,7 @@ export default function AdminSubdomainsPage() {
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Subdomain</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">User</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Domain</th>
+                  <th className="px-3 py-2 text-left font-medium text-neutral-500">KYC</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Status</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">DNS Records</th>
                   <th className="px-3 py-2 text-left font-medium text-neutral-500">Created</th>
@@ -184,6 +201,15 @@ export default function AdminSubdomainsPage() {
                     <td className="px-3 py-3 font-mono text-xs">{s.fullDomain}</td>
                     <td className="px-3 py-3">{s.user?.email || "—"}</td>
                     <td className="px-3 py-3 font-mono text-xs">{s.domain}</td>
+                    <td className="px-3 py-3">
+                      {s.kyc ? (
+                        <Badge variant={kycStatusVariant[s.kyc.status] ?? "outline"}>
+                          {s.kyc.status}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-neutral-400">—</span>
+                      )}
+                    </td>
                     <td className="px-3 py-3">
                       <Badge variant={statusVariant[s.status] ?? "default"}>{s.status}</Badge>
                     </td>
@@ -235,7 +261,7 @@ export default function AdminSubdomainsPage() {
                 ))}
                 {subdomains.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-sm text-neutral-500">
+                    <td colSpan={8} className="py-12 text-center text-sm text-neutral-500">
                       No subdomains found.
                     </td>
                   </tr>
@@ -253,6 +279,28 @@ export default function AdminSubdomainsPage() {
               <CardTitle>Edit Subdomain Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {subdomains.find(s => s.id === editModal.id)?.kyc && (
+                <div className="space-y-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs dark:border-neutral-800 dark:bg-neutral-900">
+                  <p className="font-medium text-sm">Identity Verification</p>
+                  {(() => {
+                    const kyc = subdomains.find(s => s.id === editModal.id)!.kyc!;
+                    return (
+                      <>
+                        <div className="flex justify-between"><span className="text-neutral-500">Full Name</span><span>{kyc.fullName}</span></div>
+                        <div className="flex justify-between"><span className="text-neutral-500">Phone</span><span>{kyc.phone}</span></div>
+                        <div className="flex justify-between"><span className="text-neutral-500">Address</span><span>{kyc.address}</span></div>
+                        <div className="flex justify-between"><span className="text-neutral-500">Purpose</span><span>{kyc.purpose}</span></div>
+                        <div className="flex justify-between"><span className="text-neutral-500">Status</span>
+                          <Badge variant={kycStatusVariant[kyc.status] ?? "outline"}>{kyc.status}</Badge>
+                        </div>
+                        {kyc.verifiedAt && (
+                          <div className="flex justify-between"><span className="text-neutral-500">Verified At</span><span>{new Date(kyc.verifiedAt).toLocaleDateString()}</span></div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
               <label className="text-sm font-medium">Status</label>
               <select
                 value={editModal.status}

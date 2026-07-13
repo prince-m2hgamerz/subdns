@@ -34,6 +34,8 @@ export default function SettingsPage() {
   const [phoneSaved, setPhoneSaved] = useState(false);
   const [currentPlanId, setCurrentPlanId] = useState<PlanId | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
+  const [kycStatus, setKycStatus] = useState<string | null>(null);
+  const [kycLoading, setKycLoading] = useState(true);
 
   const isPhoneUser = !!session?.user?.phone;
 
@@ -50,6 +52,13 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((d) => { if (d.plan) setCurrentPlanId(d.plan); })
       .finally(() => setPlanLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/user/kyc")
+      .then((r) => r.json())
+      .then((d) => { if (d.verification) setKycStatus(d.verification.verification_status); })
+      .finally(() => setKycLoading(false));
   }, []);
 
   const currentPlan = currentPlanId ? PLANS[currentPlanId] : null;
@@ -174,6 +183,35 @@ export default function SettingsPage() {
               {saving ? "Saving..." : saved ? "Saved!" : "Update Profile"}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>KYC Verification</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {kycLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+            </div>
+          ) : kycStatus === "verified" ? (
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <Check className="h-4 w-4" /> Identity verified
+            </div>
+          ) : kycStatus === "pending" ? (
+            <div className="space-y-2">
+              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">Pending Review</Badge>
+              <p className="text-sm text-muted-foreground">Your KYC is under review. We&apos;ll notify you once it&apos;s approved.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Complete identity verification to enable full access.</p>
+              <Link href="/dashboard/subdomains/new">
+                <Button size="sm">Complete KYC</Button>
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
 

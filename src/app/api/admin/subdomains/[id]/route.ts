@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/admin-auth-guard";
+import { deleteDnsRecord } from "@/lib/cloudflare";
+import { logActivity } from "@/lib/activity";
 
 export async function PATCH(
   req: Request,
@@ -63,7 +65,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireAdmin();
@@ -71,8 +73,36 @@ export async function DELETE(
 
   const { id } = await params;
 
+  const { data: subdomain } = await supabase
+    .from("subdomains")
+    .select("*, dns_records(*)")
+    .eq("id", id)
+    .single();
+
+  if (!subdomain) {
+    return NextResponse.json({ error: "Subdomain not found" }, { status: 404 });
+  }
+
+  if (subdomain.cloudflare_id) {
+    try { await deleteDnsRecord(subdomain.cloudflare_id); } catch { }
+  }
+
+  for (const record of subdomain.dns_records) {
+    if (record.cloudflare_id) {
+      try { await deleteDnsRecord(record.cloudflare_id); } catch { }
+    }
+  }
+
   await supabase.from("dns_records").delete().eq("subdomain_id", id);
   await supabase.from("subdomains").delete().eq("id", id);
+
+  await logActivity({
+    userId: auth.userId!,
+    event: "ADMIN_SUBDOMAIN_DELETED",
+    metadata: { subdomainId: id, domain: subdomain.full_domain },
+    ip: req.headers.get("x-forwarded-for") ?? undefined,
+    userAgent: req.headers.get("user-agent") ?? undefined,
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -19,6 +19,8 @@ export interface Subdomain {
   type: string;
   proxied: boolean;
   status: string;
+  dnsMode: "STANDARD" | "DELEGATED";
+  nameservers: string[] | null;
   dnsRecords: DnsRecord[];
 }
 

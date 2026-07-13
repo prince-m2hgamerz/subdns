@@ -30,6 +30,8 @@ export default async function AdminOverviewPage() {
     { count: suspendedSubdomains },
     { count: pendingSubdomains },
     { count: bannedUsers },
+    { count: totalKyc },
+    { count: approvedKyc },
     { data: recentUsers },
     { data: recentSubdomains },
     { data: recentActivity },
@@ -44,6 +46,8 @@ export default async function AdminOverviewPage() {
     supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("status", "SUSPENDED"),
     supabase.from("subdomains").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
     supabase.from("users").select("*", { count: "exact", head: true }).eq("is_banned", true),
+    supabase.from("kyc_verifications").select("*", { count: "exact", head: true }),
+    supabase.from("kyc_verifications").select("*", { count: "exact", head: true }).eq("status", "APPROVED"),
     supabase.from("users")
       .select("id, name, email, role, created_at")
       .order("created_at", { ascending: false })
@@ -77,7 +81,7 @@ export default async function AdminOverviewPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Card>
           <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-2">
             <CardTitle className="text-xs font-medium text-neutral-500 sm:text-sm">Total Users</CardTitle>
@@ -129,6 +133,15 @@ export default async function AdminOverviewPage() {
           <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
             <p className="text-xl font-bold sm:text-2xl lg:text-3xl">{totalApiKeys ?? 0}</p>
             <p className="mt-1 text-xs text-neutral-500">{reservedCount ?? 0} reserved names</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="p-4 pb-2 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs font-medium text-neutral-500 sm:text-sm">KYC Verifications</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <p className="text-xl font-bold sm:text-2xl lg:text-3xl">{totalKyc}</p>
+            <p className="mt-1 text-xs text-emerald-500">{approvedKyc} approved</p>
           </CardContent>
         </Card>
       </div>

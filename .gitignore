@@ -56,3 +56,5 @@ next-env.d.ts
 /SubDNS/
 
 .vercel
+
+/SMSGateJSandTSAPIClient

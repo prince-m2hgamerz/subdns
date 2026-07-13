@@ -30,6 +30,7 @@ const footerLinks: FooterGroup[] = [
       { label: "API Reference", href: "/docs/api" },
       { label: "Get Started", href: "/auth/register" },
       { label: "Status", href: "/status" },
+      { label: "Verify Certificate", href: "/verify" },
       { label: "Changelog", href: "/changelog" },
     ],
   },
@@ -51,6 +52,7 @@ const footerLinks: FooterGroup[] = [
       { label: "Refunds & Cancellations", href: "/legal/refunds" },
       { label: "Acceptable Use Policy", href: "/legal/aup" },
       { label: "DMCA Policy", href: "/legal/dmca" },
+      { label: "Disclaimer", href: "/disclaimer" },
     ],
   },
   {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Globe, Download, CheckCircle } from "lucide-react";
+import { ArrowLeft, Trash2, Globe, Download, Server, ExternalLink, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,6 +116,31 @@ export default function SubdomainDetailPage() {
     }
   };
 
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadOwnershipCert = async () => {
+    setDownloading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/subdomains/${id}/ownership-certificate`);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to generate certificate");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ownership-${subdomain?.name}.${subdomain?.domain}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to download certificate");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -162,6 +187,10 @@ export default function SubdomainDetailPage() {
             {subdomain.status}
           </Badge>
           {subdomain.proxied && <Badge variant="outline">Proxied</Badge>}
+          <Badge variant={subdomain.dnsMode === "DELEGATED" ? "info" : "outline"}>
+            <Server className="mr-1 h-3 w-3" />
+            {subdomain.dnsMode}
+          </Badge>
           <Button variant="outline" size="sm" className="gap-2" onClick={exportZone}>
             <Download className="h-4 w-4" /> Export
           </Button>
@@ -171,51 +200,98 @@ export default function SubdomainDetailPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-4 w-4" /> DNS Records
-          </CardTitle>
-          <AddRecordForm subdomainId={id} subdomainName={subdomain.name} onAdded={fetchSubdomain} />
-        </CardHeader>
-        <CardContent>
-          {subdomain.dnsRecords.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No DNS records yet. Add your first record above.
+      {subdomain.dnsMode === "DELEGATED" && subdomain.nameservers && subdomain.nameservers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4" /> Delegated Nameservers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-3 text-sm text-muted-foreground">
+              DNS is managed externally. Point your domain&apos;s nameservers to:
             </p>
-          ) : (
             <div className="space-y-2">
-              {selectedIds.size > 0 && (
-                <div className="flex items-center gap-2 pb-1">
-                  <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={bulkDeleting}>
-                    {bulkDeleting ? "Deleting..." : `Delete Selected (${selectedIds.size})`}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
-                    Clear Selection
-                  </Button>
+              {subdomain.nameservers.map((ns, i) => (
+                <div key={i} className="rounded-lg border bg-muted/50 px-3 py-2 font-mono text-sm">
+                  {ns}
                 </div>
-              )}
-              <div className="flex items-center gap-2 px-4 py-2 text-xs text-muted-foreground">
-                <Checkbox
-                  checked={subdomain.dnsRecords.length > 0 && selectedIds.size === subdomain.dnsRecords.length}
-                  onCheckedChange={toggleSelectAll}
-                />
-                <span>Select all</span>
-              </div>
-              {subdomain.dnsRecords.map((record) => (
-                <DnsRecordRow
-                  key={record.id}
-                  record={record}
-                  subdomainName={subdomain.name}
-                  domain={`${subdomain.name}.${subdomain.domain}`}
-                  selected={selectedIds.has(record.id)}
-                  onToggleSelect={toggleSelect}
-                  onEdit={fetchSubdomain}
-                  onDelete={fetchSubdomain}
-                />
               ))}
             </div>
-          )}
+          </CardContent>
+        </Card>
+      )}
+
+      {subdomain.dnsMode === "STANDARD" && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-4 w-4" /> DNS Records
+            </CardTitle>
+            <AddRecordForm subdomainId={id} subdomainName={subdomain.name} onAdded={fetchSubdomain} />
+          </CardHeader>
+          <CardContent>
+            {subdomain.dnsRecords.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No DNS records yet. Add your first record above.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {selectedIds.size > 0 && (
+                  <div className="flex items-center gap-2 pb-1">
+                    <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={bulkDeleting}>
+                      {bulkDeleting ? "Deleting..." : `Delete Selected (${selectedIds.size})`}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
+                      Clear Selection
+                    </Button>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 px-4 py-2 text-xs text-muted-foreground">
+                  <Checkbox
+                    checked={subdomain.dnsRecords.length > 0 && selectedIds.size === subdomain.dnsRecords.length}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                  <span>Select all</span>
+                </div>
+                {subdomain.dnsRecords.map((record) => (
+                  <DnsRecordRow
+                    key={record.id}
+                    record={record}
+                    subdomainName={subdomain.name}
+                    domain={`${subdomain.name}.${subdomain.domain}`}
+                    selected={selectedIds.has(record.id)}
+                    onToggleSelect={toggleSelect}
+                    onEdit={fetchSubdomain}
+                    onDelete={fetchSubdomain}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileCheck className="h-4 w-4" /> Ownership Certificate
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Download a signed document proving you own this subdomain. Contains the subdomain
+            details and a verification signature.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={handleDownloadOwnershipCert}
+            disabled={downloading}
+          >
+            <Download className="h-4 w-4" /> {downloading ? "Generating..." : "Download Certificate"}
+          </Button>
         </CardContent>
       </Card>
     </div>

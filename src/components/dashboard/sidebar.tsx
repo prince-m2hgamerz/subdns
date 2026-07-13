@@ -37,6 +37,7 @@ const links = [
   { href: "/dashboard/upgrade", icon: Zap, label: "Upgrade" },
   { href: "/dashboard/tutorials", icon: BookOpen, label: "Tutorials" },
   { href: "/dashboard/reports", icon: Bug, label: "My Reports" },
+  { href: "/verify", icon: Shield, label: "Certificate Verify" },
 ];
 
 export function Sidebar({
