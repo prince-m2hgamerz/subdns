@@ -1,6 +1,6 @@
 # @subdns/cli
 
-CLI for [SubDNS](https://subdns.io) — manage subdomains and DNS records from the terminal.
+CLI for [SubDNS](https://subdns.m2hio.in) — manage subdomains and DNS records from the terminal.
 
 ## Install
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 import { EmailCapture } from "@/components/landing/email-capture";
+import { AdUnit } from "@/components/ad-unit";
 import { Calendar, ArrowRight } from "lucide-react";
 import { posts } from "@/lib/blog";
 
@@ -30,6 +31,7 @@ export default function BlogPage() {
         <section className="section-pad border-t border-border">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl space-y-12">
+              <AdUnit slot="1234567890" />
               {posts.map((post) => (
                 <article key={post.slug}>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">

@@ -1,0 +1,564 @@
+{
+  "_meta": {
+    "generatedAt": "2026-07-16T16:15:47.274Z",
+    "description": "Structured knowledge about the SubDNS platform for AI assistant context injection."
+  },
+  "project": {
+    "name": "SubDNS",
+    "description": "Free subdomain provisioning platform with DNS management, uptime monitoring, abuse detection, and paid upgrades",
+    "techStack": {
+      "frontend": "Next.js 14+ (App Router), React, Tailwind CSS",
+      "backend": "Next.js API Routes, Supabase (PostgreSQL), NextAuth.js",
+      "infrastructure": "Node.js 20, PM2, Caddy reverse proxy, VPS at 178.16.140.188",
+      "payments": "Cashfree Payments",
+      "dns": "Cloudflare API",
+      "cache": "Upstash Redis + in-memory Map fallback",
+      "ai": "NVIDIA NIM (Nemotron-4 340B) for abuse classification",
+      "sdk": "Python SDK, JavaScript SDK, dnspython SDK"
+    },
+    "domains": {
+      "primary": "https://subdns.m2hio.in",
+      "rootDomains": {
+        "_source": "src/app/api/domains/route.ts",
+        "provided": ["m2hio.in"],
+        "userAdded": true,
+        "nameserverCheck": "Validates 2-4 FQDNs, blocks Cloudflare NS"
+      }
+    }
+  },
+  "plans": {
+    "_source": "src/lib/plans.ts",
+    "BRONZE": {
+      "maxSubdomains": 10,
+      "maxDnsRecords": 50,
+      "maxApiKeys": 3,
+      "maxCustomDomains": 1,
+      "maxMonitors": 3,
+      "activityRetentionDays": 7,
+      "priority": 0,
+      "price": 0,
+      "features": [
+        "Up to 10 subdomains",
+        "50 DNS records",
+        "All DNS record types",
+        "Cloudflare proxy (orange cloud)",
+        "REST API access",
+        "Community support"
+      ]
+    },
+    "SILVER": {
+      "maxSubdomains": 50,
+      "maxDnsRecords": 500,
+      "maxApiKeys": 10,
+      "maxCustomDomains": 3,
+      "maxMonitors": 10,
+      "activityRetentionDays": 30,
+      "priority": 1,
+      "price": 99,
+      "features": [
+        "Up to 50 subdomains",
+        "500 DNS records",
+        "All DNS record types",
+        "Cloudflare proxy (orange cloud)",
+        "REST API + CLI access",
+        "Activity logs (30-day retention)",
+        "Webhook notifications",
+        "Email support"
+      ]
+    },
+    "GOLD": {
+      "maxSubdomains": 250,
+      "maxDnsRecords": 2500,
+      "maxApiKeys": 25,
+      "maxCustomDomains": 10,
+      "maxMonitors": 50,
+      "activityRetentionDays": 90,
+      "priority": 2,
+      "price": 499,
+      "features": [
+        "Up to 250 subdomains",
+        "2,500 DNS records",
+        "All DNS record types",
+        "Cloudflare proxy (orange cloud)",
+        "REST API + CLI access",
+        "Activity logs (90-day retention)",
+        "Webhook notifications",
+        "Team workspaces",
+        "Priority support"
+      ]
+    },
+    "getPlan": "getPlan(planId) => Plan — returns plan object, defaults to BRONZE",
+    "getUpgradablePlans": "getUpgradablePlans(currentPlanId) => Plan[] — returns plans with higher priority"
+  },
+  "middleware": {
+    "_source": "src/middleware.ts",
+    "paths": "Applies to all routes (/*)",
+    "securityHeaders": {
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+      "X-DNS-Prefetch-Control": "on"
+    },
+    "cors": {
+      "allowedOrigins": "subdns.m2hio.in, localhost:3000, localhost:3001",
+      "allowedMethods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+      "allowedHeaders": "Content-Type, Authorization, x-webhook-signature, x-csrf-token",
+      "preflight": "Returns 204 for OPTIONS requests"
+    },
+    "csrf": {
+      "protection": "Validates x-csrf-token header against cookie token",
+      "bypassedPaths": ["/api/auth/", "/api/ddns/", "/api/nic/"],
+      "allMethods": "Applied to POST, PUT, DELETE, PATCH"
+    },
+    "rateLimiting": {
+      "signup": "Redis-based, max 3 per 15 minutes per IP",
+      "general": "Not rate-limited in middleware (handled per-route if needed)"
+    },
+    "botDetection": {
+      "blockedUserAgents": "curl, wget, python-requests, go-http-client, java/, urllib, httpx, aiohttp, axios, guzzle, postman, insomnia, httpclient, okhttp, apache-http, scarlet, nikto, sqlmap, nmap, nessus, openssh, pyssh, zap, wfuzz, dirbuster, masscan, zgrab, whatweb, droopescan, joomscan, wpscan, acunetix, nessus, openvas, netsparker, appscan, ibm, webinspect, qualys, sobelow, brakeman, nmap, masscan, zmap, p0f, pwnie, medusa, hydra, thc, aircrack, kismet, bettercap, beef, metasploit, exploit, commix, fuxploider, xxeserv, ssrfmap, smuggler, h2csmuggler, rush, bombardier, vegeta, fortio, wrk, ab, hey, siege, locust, mzbench, ghz, drill, k6, artillery, autocannon, loadtest, slowloris, goldeneye, pyloris, torshammer, davoset, hping, impacket, crackmapexec, bloodhound, responder, mimikatz, pcredz, john, hashcat, oclhashcat, hydra, medusa, ncrack, crowbar, patator, ceWL, crunch, kwprocessor, maskprocessor, statsprocessor, princeprocessor"
+    },
+    "ipBlacklisting": {
+      "header": "x-ip-blacklisted",
+      "_note": "Blocked if header value is '1'; IPs added via admin abuse management"
+    },
+    "pathRewrites": {
+      "status-page": "/status?domain=:path* — Rewrites /status-page/* to /status route"
+    }
+  },
+  "auth": {
+    "_source": ["src/lib/auth.ts", "src/lib/get-user-id.ts"],
+    "providers": {
+      "credentials": "Email/password + phone OTP verification",
+      "github": "GitHub OAuth",
+      "google": "Google OAuth"
+    },
+    "databaseAdapter": "Supabase (custom adapter mapping NextAuth to Supabase schema)",
+    "sessionStrategy": "JWT-based (no database sessions)",
+    "getUserId": "getUserId(req: NextRequest) => string | null — extracts user ID from NextAuth JWT cookie; returns 401 on failure",
+    "pages": {
+      "signIn": "/auth/login",
+      "register": "/auth/register",
+      "forgotPassword": "/auth/forgot-password"
+    },
+    "phoneOtp": {
+      "sentVia": "SMS (src/lib/sms.ts)",
+      "api": "/api/auth/otp/send, /api/auth/otp/verify"
+    },
+    "passwordReset": {
+      "sentVia": "Email with reset link",
+      "api": "/api/auth/reset-password"
+    }
+  },
+  "subscription": {
+    "_source": "src/lib/subscription.ts",
+    "statuses": {
+      "PENDING": "Payment initiated, awaiting confirmation",
+      "ACTIVE": "Subscription active",
+      "FAILED": "Payment failed",
+      "CANCELLED": "Cancelled by user",
+      "EXPIRED": "Past expiry date"
+    },
+    "duration": "30 days from activation",
+    "gracePeriodDays": 7,
+    "autoExpiry": "Expired subscriptions automatically treated as BRONZE (free tier)",
+    "expectActiveSubscription": "expectActiveSubscription(userId) => { active: boolean, plan: string, trial?: boolean } — checks status + expiry",
+    "planAccess": "getPlanAccess(userId) => { plan: string, allowed: boolean } — validates user's plan access level",
+    "sessionId": "Stored on subscription row after Cashfree payment session creation"
+  },
+  "cashfree": {
+    "_source": "src/lib/cashfree.ts",
+    "mode": "Dual: test (SANDBOX) / live (PRODUCTION) controlled by settings-store key 'cashfree_mode'",
+    "environmentKeys": {
+      "test": "TEST_APP_ID, TEST_SECRET_KEY from env",
+      "live": "LIVE_APP_ID, LIVE_SECRET_KEY from env"
+    },
+    "api": {
+      "createOrder": "Creates Cashfree order session; stores session_id on subscription",
+      "verifyPayment": "Verifies payment signature and status",
+      "getOrderStatus": "Queries current order status from Cashfree"
+    },
+    "webhook": {
+      "endpoint": "/api/payment/webhook",
+      "signature": "HMAC-SHA256 verification of Cashfree payload",
+      "events": ["PAYMENT_SUCCESS", "PAYMENT_FAILED"]
+    }
+  },
+  "cloudflare": {
+    "_source": "src/lib/cloudflare.ts",
+    "apiEndpoint": "https://api.cloudflare.com/client/v4",
+    "auth": "CF_API_TOKEN, CF_ZONE_ID, CF_ACCOUNT_ID from env vars",
+    "dnsOperations": {
+      "createRecord": "POST /zones/:zoneId/dns_records",
+      "getRecords": "GET /zones/:zoneId/dns_records?type=...&name=...",
+      "updateRecord": "PUT /zones/:zoneId/dns_records/:id",
+      "deleteRecord": "DELETE /zones/:zoneId/dns_records/:id"
+    },
+    "recordTypes": ["A", "AAAA", "CNAME", "TXT", "MX", "NS", "SRV", "CAA"],
+    "validation": {
+      "ttlMin": 60,
+      "ttlMax": 86400,
+      "proxiableTypes": ["A", "AAAA", "CNAME"]
+    },
+    "features": {
+      "proxied": "Orange cloud toggle (Cloudflare proxy enabled/disabled)",
+      "ttl": "Auto or custom TTL in seconds",
+      "priority": "Supported for MX and SRV records"
+    }
+  },
+  "supabase": {
+    "_source": "src/lib/supabase.ts",
+    "pattern": "Singleton pattern: supabaseService (service_role) for server-side, supabase (anon key) as fallback",
+    "database": "PostgreSQL with pgvector extension enabled",
+    "migrations": "supabase/migrations/20250716000001_enable_pgvector.sql"
+  },
+  "redis": {
+    "_source": "src/lib/redis.ts",
+    "provider": "Upstash Redis (REST API via @upstash/redis)",
+    "fallback": "In-memory Map cache when Redis is unavailable",
+    "helpers": [
+      "getCached<T>(key) => T | null — retrieve from Redis, fallback to memory",
+      "setCache<T>(key, value, ttl?) — store in Redis + memory with optional TTL",
+      "invalidateCache(key) — remove from Redis + memory"
+    ]
+  },
+  "email": {
+    "_source": "src/lib/email.ts",
+    "transport": "SMTP via env vars (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS)",
+    "fromAddress": "noreply@subdns.m2hio.in",
+    "templateTypes": [
+      { "id": "onboarding", "subject": "Welcome to SubDNS!" },
+      { "id": "subdomain_created", "subject": "Subdomain Created — {{name}}.{{domain}}" },
+      { "id": "dns_created", "subject": "DNS Record Added — {{type}} record for {{name}}.{{domain}}" },
+      { "id": "dns_updated", "subject": "DNS Record Updated — {{type}} record for {{name}}.{{domain}}" },
+      { "id": "subdomain_down", "subject": "ALERT: {{name}}.{{domain}} is DOWN" },
+      { "id": "account_banned", "subject": "Account Suspended" },
+      { "id": "plan_changed", "subject": "Plan Updated to {{plan}}" },
+      { "id": "report_status", "subject": "Report #{{reportId}} Status Update" },
+      { "id": "api_key_created", "subject": "New API Key Created" }
+    ],
+    "htmlTemplates": "Each template type has a dedicated HTML builder function returning full <html> with inline CSS"
+  },
+  "uptime": {
+    "_source": "src/lib/uptime.ts",
+    "tables": {
+      "monitors": "Stores monitor config (id, user_id, subdomain_id, name, url, method, check_interval, timeout, expected_status, created_at, updated_at)",
+      "checks": "Stores check results (id, monitor_id, status_code, response_time_ms, is_up, error, checked_at)"
+    },
+    "intervals": "1m, 5m, 15m, 30m, 60m (configurable per monitor)",
+    "timeout": "Up to 30 seconds per check",
+    "functions": {
+      "getAllMonitors": "Returns all monitors with latest check status",
+      "getMonitors": "Returns monitors for a specific user",
+      "createMonitor": "Creates a new monitor with plan limit check",
+      "updateMonitor": "Updates monitor configuration",
+      "deleteMonitor": "Deletes a monitor and its check history",
+      "recordCheck": "Records a new uptime check result",
+      "getMonitorHistory": "Returns check history for a monitor with configurable limit",
+      "getUptimePercentage": "Calculates uptime percentage over a date range"
+    },
+    "limits": {
+      "BRONZE": 3,
+      "SILVER": 10,
+      "GOLD": 50
+    }
+  },
+  "abuseDetection": {
+    "_source": "src/lib/abuse-detection.ts",
+    "scoring": {
+      "phishingKeywords": [
+        "login", "signin", "account", "verify", "secure", "banking",
+        "paypal", "apple", "google", "microsoft", "amazon", "netflix",
+        "facebook", "instagram", "whatsapp", "update", "confirm",
+        "authenticate", "credential", "password", "reset", "recover",
+        "unlock", "validate", "security", "alert", "suspicious",
+        "unusual", "access", "restricted", "limited", "blocked",
+        "disabled", "suspend", "terminated", "expired", "billing",
+        "invoice", "payment", "refund", "transaction", "outlook",
+        "office365", "sharepoint", "teams", "zoom", "docusign",
+        "adobe", "dropbox", "drive", "icloud", "steam", "discord",
+        "telegram", "tiktok", "douyin", "baidu", "tencent", "weibo", "qq"
+      ],
+      "homoglyphCharCount": 140,
+      "entropyThreshold": 3.5,
+      "tldBlocklist": [".tk", ".ml", ".ga", ".cf", ".gq"],
+      "suspiciousTlds": [
+        ".top", ".xyz", ".work", ".win", ".bid", ".date", ".loan",
+        ".men", ".mom", ".click", ".review", ".trade", ".download",
+        ".racing", ".webcam", ".science"
+      ],
+      "scoreWeights": {
+        "phishingKeyword": 15,
+        "homoglyph": 20,
+        "entropy": 10,
+        "suspiciousTld": 15,
+        "brandImpersonation": 25,
+        "tldBlocklist": 50,
+        "agePenalty": 20
+      },
+      "thresholds": {
+        "flagScore": 30,
+        "blockScore": 60
+      }
+    },
+    "velocity": {
+      "windowMinutes": 5,
+      "maxSubdomainCreations": 5,
+      "maxDnsCreations": 20
+    },
+    "llm": {
+      "_source": "src/lib/abuse-llm.ts",
+      "model": "nvidia-nim/nemotron-4-340b-instruct",
+      "endpoint": "https://integrate.api.nvidia.com/v1/chat/completions",
+      "promptTemplate": "You are an abuse detection classifier for a subdomain provisioning service..."
+    },
+    "reservedNames": [
+      "admin", "mail", "ftp", "root", "localhost", "www", "support",
+      "abuse", "api", "cloudflare", "vercel", "ns1", "ns2", "ns3", "ns4",
+      "smtp", "imap", "pop3", "blog", "help", "status", "docs", "dev",
+      "staging", "test", "demo", "app", "dashboard", "console", "cdn",
+      "assets", "static", "media", "img", "css", "js", "fonts"
+    ]
+  },
+  "brandImpersonation": {
+    "_source": "context/banned-impersonation/",
+    "brands": ["GODADDY", "HOSTINGER", "NAMECHEAP", "CLOUDFLARE", "AWS", "GOOGLE", "MICROSOFT"],
+    "detection": "DNS pattern-based — each brand has a JSON file with known domains, patterns, and keywords used by impersonators"
+  },
+  "webhooks": {
+    "_source": "src/lib/webhooks.ts",
+    "events": [
+      "subdomain.created", "subdomain.updated", "subdomain.deleted",
+      "subdomain.flagged", "subdomain.down",
+      "dns.created", "dns.updated", "dns.deleted",
+      "uptime_monitor.down", "uptime_monitor.up",
+      "account.banned", "account.warning",
+      "plan.changed", "report.status",
+      "api_key.created", "custom_domain.created",
+      "payment.completed", "payment.failed", "payment.refunded",
+      "subscription.created", "subscription.cancelled", "subscription.expired",
+      "login.new_device", "security.alert",
+      "team.invited", "team.joined", "team.removed"
+    ],
+    "delivery": {
+      "signingAlgorithm": "sha256",
+      "signatureHeader": "x-webhook-signature",
+      "retries": 3,
+      "timeoutMs": 10000,
+      "backoff": "Exponential backoff between retries",
+      "maxUrls": 5
+    },
+    "logging": "All delivery attempts logged to webhook_logs table",
+    "deliverWebhooks": "deliverWebhooks(userId, event, data) => Promise<void> — sends to all active webhook URLs"
+  },
+  "customDomains": {
+    "_source": "src/lib/custom-domains.ts",
+    "verification": {
+      "method": "DNS TXT record lookup via Google DNS over HTTPS",
+      "tokenPrefix": "sdns-verify-",
+      "tokenLength": 32,
+      "endpoint": "https://dns.google/resolve?name=...&type=TXT"
+    },
+    "ssl": {
+      "provider": "Cloudflare (proxied)",
+      "statuses": ["PENDING", "ACTIVE", "FAILED"]
+    },
+    "limits": {
+      "maxPerPlan": { "BRONZE": 1, "SILVER": 3, "GOLD": 10 }
+    },
+    "functions": {
+      "addCustomDomain": "Validates format, checks duplicates, generates verification token",
+      "verifyCustomDomain": "Checks DNS TXT record against Google DNS, updates status",
+      "getCustomDomains": "Returns all custom domains for user with subdomain join",
+      "deleteCustomDomain": "Removes custom domain record"
+    }
+  },
+  "dnsManagement": {
+    "_source": "src/lib/cloudflare.ts",
+    "provider": "Cloudflare API",
+    "apiEndpoint": "https://api.cloudflare.com/client/v4",
+    "recordTypes": ["A", "AAAA", "CNAME", "TXT", "MX", "NS", "SRV", "CAA"],
+    "validation": {
+      "ttlMin": 60,
+      "ttlMax": 86400,
+      "proxiableTypes": ["A", "AAAA", "CNAME"]
+    }
+  },
+  "nameserverValidation": {
+    "_source": "src/lib/validate-nameservers.ts",
+    "rules": [
+      "Must be 2-4 FQDNs",
+      "Each FQDN matches domain regex",
+      "Cloudflare nameservers blocked",
+      "No duplicates allowed"
+    ]
+  },
+  "activityLogging": {
+    "_source": "src/lib/activity.ts",
+    "function": "logActivity({ userId?, subdomainId?, ip?, userAgent?, type?, event?, description?, metadata? })",
+    "eventTypes": [
+      "DNS_CREATED", "DNS_DELETED", "DNS_UPDATED", "DNS_BULK_DELETED",
+      "SUBDOMAIN_CREATED", "SUBDOMAIN_DELETED", "SUBDOMAIN_UPDATED", "SUBDOMAIN_BULK_DELETED",
+      "LOGIN", "LOGOUT", "REGISTER",
+      "API_REQUEST", "SECURITY_EVENT",
+      "PROXY_ENABLED", "PROXY_DISABLED",
+      "API_KEY_CREATED", "API_KEY_UPDATED", "API_KEY_DELETED",
+      "CONTACT_SENT", "REPORT_SUBMITTED",
+      "SUBSCRIPTION_CREATED", "SUBSCRIPTION_ACTIVATED", "SUBSCRIPTION_CANCELLED", "SUBSCRIPTION_EXPIRED"
+    ]
+  },
+  "analytics": {
+    "_source": "src/lib/analytics.ts",
+    "functions": {
+      "getDnsAnalytics": "Returns daily DNS query counts and blocked threats for a user over N days",
+      "getAllDnsAnalytics": "Returns global DNS analytics aggregated across all users"
+    },
+    "dataSource": "activities table — counts entries per date, threats flagged by metadata.blocked"
+  },
+  "notifications": {
+    "_source": "src/lib/notifications.ts",
+    "channels": ["email", "webhook", "sms"],
+    "emailEvents": [
+      "onboarding", "subdomain_created", "dns_created", "dns_updated",
+      "subdomain_down", "account_banned", "plan_changed", "report_status", "api_key_created"
+    ],
+    "smsEvents": "Same as email events; opt-in via notify_by_sms preference",
+    "preferenceDb": "user_notification_preferences table with per-event boolean columns",
+    "notify": "notify(userId, event, emailData, webhookData?) — sends email, SMS, and webhooks respecting user prefs"
+  },
+  "userAccount": {
+    "_source": "src/lib/user-account.ts",
+    "deleteAccount": "Cascade deletes: subdomains, DNS records (via Cloudflare API), monitors, webhooks, API keys, activity logs, notifications, billing, custom domains, user row"
+  },
+  "settingsStore": {
+    "_source": "src/lib/settings-store.ts",
+    "type": "Key-value store for app configuration persisted in DB",
+    "keys": {
+      "cashfree_mode": "SANDBOX | PRODUCTION — controls Cashfree payment environment"
+    }
+  },
+  "frontendPages": {
+    "public": [
+      "/ — Landing page",
+      "/about — About page",
+      "/blog — Blog posts",
+      "/brand — Brand assets",
+      "/changelog — Changelog",
+      "/contact — Contact form",
+      "/demo — Demo/ showcase",
+      "/developer — Developer docs",
+      "/docs — Documentation",
+      "/enterprise — Enterprise page",
+      "/faq — FAQ",
+      "/features — Features",
+      "/legal — Legal / privacy / terms",
+      "/pricing — Pricing page",
+      "/security — Security page",
+      "/status — Status page (public uptime)",
+      "/status-page/* — Rewritten from middleware to /status"
+    ],
+    "auth": [
+      "/auth/login — Login",
+      "/auth/register — Registration",
+      "/auth/forgot-password — Password reset"
+    ],
+    "dashboard": {
+      "layout": "src/app/dashboard/ (protected)",
+      "sections": [
+        "activity — Activity log",
+        "ai-assistant — AI assistant",
+        "analytics — DNS analytics",
+        "api-keys — API key management",
+        "billing — Billing / invoices",
+        "ddns — Dynamic DNS",
+        "domains — Root domains",
+        "report / reports — Abuse reports",
+        "settings — Account settings",
+        "settings/notifications — Notification preferences",
+        "settings/webhooks — Webhook configuration",
+        "subdomains — Subdomain management",
+        "subdomains/new — Create subdomain",
+        "subdomains/[id] — Subdomain detail",
+        "tutorials — Tutorials",
+        "upgrade — Plan upgrade",
+        "uptime — Uptime monitors"
+      ]
+    }
+  },
+  "apiRoutes": {
+    "pattern": {
+      "imports": "NextRequest, NextResponse from 'next/server'; getUserId from '@/lib/get-user-id'",
+      "auth": "const userId = getUserId(req); if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })",
+      "body": "const body = await req.json()",
+      "response": "NextResponse.json({ data, success: true }) or NextResponse.json({ error }, { status })",
+      "errorHandling": "try/catch wrapping route logic, returning 500 on error"
+    },
+    "groups": {
+      "activity": "/api/activity — Activity log CRUD (user scoped)",
+      "agent": "/api/agent — Agent API",
+      "analytics": "/api/analytics — DNS analytics endpoints",
+      "apiKeys": "/api/api-keys — API key management",
+      "auth": "/api/auth/* — NextAuth handlers, OTP send/verify, password reset",
+      "billing": "/api/billing — Billing history and invoices",
+      "contact": "/api/contact — Contact form submission",
+      "customDomains": "/api/custom-domains — Custom domain CRUD + verify",
+      "ddns": "/api/ddns — Dynamic DNS update endpoint (no CSRF)",
+      "debug": "/api/debug — Debug utilities",
+      "dns": "/api/dns — DNS record CRUD + bulk delete",
+      "domains": "/api/domains — Root domain CRUD + nameserver validation",
+      "nic": "/api/nic — NIC-style DDNS endpoint (no CSRF)",
+      "payment": "/api/payment/* — Cashfree order creation, webhook, status",
+      "plans": "/api/plans — Plan listing and upgrade info",
+      "report": "/api/report — Abuse report submission",
+      "stats": "/api/stats — User statistics",
+      "statusPage": "/api/status-page — Public status page data",
+      "subdomains": "/api/subdomains — Subdomain CRUD + availability check",
+      "subscribe": "/api/subscribe — Newsletter subscription",
+      "uptime": "/api/uptime — Uptime monitor CRUD + check history",
+      "user": "/api/user — User profile CRUD + account deletion",
+      "verify": "/api/verify — Email/domain verification",
+      "webhooks": "/api/webhooks — Webhook URL CRUD"
+    }
+  },
+  "sdkPackages": {
+    "sdk-python": "packages/sdk-python — Python SDK for SubDNS API",
+    "sdk-js": "packages/sdk-js — JavaScript SDK for SubDNS API",
+    "sdk-docs": "packages/sdk-docs — SDK documentation",
+    "dnspython-sdk": "packages/dnspython-sdk — dnspython integration library"
+  },
+  "deploy": {
+    "ciCd": {
+      "platform": "GitHub Actions",
+      "trigger": "push to main",
+      "nodeVersion": 20,
+      "installCmd": "npm ci --legacy-peer-deps",
+      "buildCmd": "npm run build",
+      "deployMethod": "rsync to VPS",
+      "pm2AppName": "subdns-next",
+      "targetDir": "/var/www/subdns"
+    },
+    "reverseProxy": {
+      "software": "Caddy",
+      "listen": "178.16.140.188:80/443",
+      "backend": "localhost:3000",
+      "tls": "subdns.m2hio.in (auto HTTPS)"
+    }
+  },
+  "fileStructure": {
+    "src/app/api": "All 25 API route groups",
+    "src/lib": "Core libraries (30+ modules)",
+    "src/app/dashboard": "User dashboard with 18+ sections",
+    "src/app/auth": "Login, register, password reset pages",
+    "src/app": "Public pages: about, blog, brand, changelog, contact, demo, developer, docs, enterprise, faq, features, legal, pricing, security, status, verify",
+    "src/middleware.ts": "Security headers, CORS, CSRF, rate limiting, bot detection, IP blacklisting, path rewrites",
+    "packages/": "SDK packages (python, js, docs, dnspython)",
+    "supabase/": "Migrations and seed data",
+    "context/banned-impersonation/": "Brand impersonation detection data (7 brands)",
+    "scripts/": "Utility scripts",
+    "data/": "Data files",
+    "public/": "Static assets",
+    "docker/": "Docker configuration",
+    "docs/": "Documentation",
+    "cli/": "CLI tool"
+  }
+}

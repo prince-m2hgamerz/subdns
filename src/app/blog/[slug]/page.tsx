@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Navbar } from "@/components/landing/navbar"
 import { Footer } from "@/components/landing/footer"
 import { EmailCapture } from "@/components/landing/email-capture"
+import { AdUnit } from "@/components/ad-unit"
 import { posts, siteUrl } from "@/lib/blog"
 import { Calendar, ArrowLeft } from "lucide-react"
 
@@ -121,6 +122,14 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           </div>
         </article>
+
+        <div className="section-pad border-t border-border">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl">
+              <AdUnit slot="1234567890" />
+            </div>
+          </div>
+        </div>
 
         <EmailCapture />
       </main>

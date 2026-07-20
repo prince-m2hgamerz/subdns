@@ -172,6 +172,13 @@ export function Navbar() {
               <span className="absolute bottom-1 left-3 h-px w-[calc(100%-1.5rem)] scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
             </Link>
             <Link
+              href="/faq"
+              className="group relative cursor-pointer rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
+            >
+              FAQ
+              <span className="absolute bottom-1 left-3 h-px w-[calc(100%-1.5rem)] scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
+            </Link>
+            <Link
               href="/contact"
               className="group relative cursor-pointer rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-gray-100"
             >
@@ -217,7 +224,7 @@ export function Navbar() {
         </div>
 
         <button
-          onClick={() => setOpen(!open)}
+          onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
           className="flex cursor-pointer items-center rounded-lg p-2 hover:bg-gray-100 md:hidden"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -230,12 +237,14 @@ export function Navbar() {
         </div>
       )}
       <div
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         className={cn(
           "fixed top-0 right-0 bottom-0 z-50 w-[85vw] max-w-sm border-l border-border bg-background shadow-2xl transition-transform duration-300 ease-in-out md:hidden",
           open ? "translate-x-0" : "translate-x-full"
         )}
       >
-        <div className="flex h-full flex-col overflow-y-auto px-5 pb-8 pt-4">
+        <div className="flex h-full flex-col overflow-y-auto overscroll-contain px-5 pb-8 pt-4">
           <div className="mb-4 flex items-center justify-between">
             <Logo />
             <button
@@ -269,6 +278,13 @@ export function Navbar() {
                   className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-gray-100"
                 >
                   About
+                </Link>
+                <Link
+                  href="/faq"
+                  onClick={() => setOpen(false)}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-gray-100"
+                >
+                  FAQ
                 </Link>
                 <Link
                   href="/contact"

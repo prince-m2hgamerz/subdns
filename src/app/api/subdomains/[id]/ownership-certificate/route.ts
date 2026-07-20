@@ -3,6 +3,11 @@ import { supabase } from "@/lib/supabase";
 import { getUserId } from "@/lib/get-user-id";
 import { headers } from "next/headers";
 import PDFDocument from "pdfkit";
+import fs from "fs";
+import path from "path";
+
+// pdfkit + fs need the Node.js runtime (this route won't work on Edge)
+export const runtime = "nodejs";
 
 // ---- formal certificate palette: navy ink + muted bronze accent on parchment ----
 const ink = "#1c2541";
@@ -23,6 +28,14 @@ function fmt(d: string | Date) {
   return new Date(d).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric",
   });
+}
+
+// Loaded once per cold start; logo lives at /public/brand/m2h-logo.jpg
+let logoBuffer: Buffer | null = null;
+try {
+  logoBuffer = fs.readFileSync(path.join(process.cwd(), "public", "brand", "m2h-logo.jpg"));
+} catch {
+  logoBuffer = null; // certificate still renders fine without it
 }
 
 export async function GET(
@@ -140,23 +153,33 @@ export async function GET(
           doc.moveTo(px, py).lineTo(px, py + cLen * dy).stroke();
         });
 
-        // ---- brand roundel ----
-        const sealTop = { x: cx, y: 66, r: 22 };
-        doc.lineWidth(1).strokeColor(bronze).circle(sealTop.x, sealTop.y, sealTop.r).stroke();
-        doc.fontSize(16).font("Times-Bold").fillColor(ink)
-          .text("S", sealTop.x - sealTop.r, sealTop.y - 8, { width: sealTop.r * 2, align: "center" });
+        // ---- brand mark (M2H Web Solution logo, falls back to a drawn roundel) ----
+        const logoSize = 70;
+        const logoTop = 35;
+        if (logoBuffer) {
+          // circular clip so the square jpg reads as a mark, not a tile
+          doc.save();
+          doc.circle(cx, logoTop + logoSize / 2, logoSize / 2).clip();
+          doc.image(logoBuffer, cx - logoSize / 2, logoTop, { width: logoSize, height: logoSize });
+          doc.restore();
+          doc.lineWidth(1).strokeColor(bronze).circle(cx, logoTop + logoSize / 2, logoSize / 2).stroke();
+        } else {
+          doc.lineWidth(1).strokeColor(bronze).circle(cx, logoTop + logoSize / 2, logoSize / 2).stroke();
+          doc.fontSize(16).font("Times-Bold").fillColor(ink)
+            .text("S", cx - logoSize / 2, logoTop + logoSize / 2 - 8, { width: logoSize, align: "center" });
+        }
 
         doc.fontSize(8).font("Helvetica-Bold").fillColor(bronze)
-          .text("S U B D N S", L, 96, { width: CW, align: "center", characterSpacing: 1 });
+          .text("S U B D N S", L, 114, { width: CW, align: "center", characterSpacing: 1 });
         doc.fontSize(7.5).font("Helvetica").fillColor(inkFaint)
-          .text("DOMAIN OWNERSHIP REGISTRY", L, 108, { width: CW, align: "center", characterSpacing: 1.5 });
+          .text("DOMAIN OWNERSHIP REGISTRY", L, 126, { width: CW, align: "center", characterSpacing: 1.5 });
 
         // ---- title ----
         doc.fontSize(25).font("Times-Bold").fillColor(ink)
-          .text("Certificate of Subdomain Ownership", L, 128, { width: CW, align: "center" });
+          .text("Certificate of Subdomain Ownership", L, 146, { width: CW, align: "center" });
 
         // ---- ornamental divider ----
-        const divY = 168;
+        const divY = 186;
         doc.lineWidth(0.75).strokeColor(bronze);
         doc.moveTo(cx - 110, divY).lineTo(cx - 16, divY).stroke();
         doc.moveTo(cx + 16, divY).lineTo(cx + 110, divY).stroke();
@@ -167,22 +190,22 @@ export async function GET(
 
         // ---- certifying statement ----
         doc.fontSize(11).font("Times-Italic").fillColor(inkSoft)
-          .text("This is to certify that", L, 186, { width: CW, align: "center" });
+          .text("This is to certify that", L, 204, { width: CW, align: "center" });
 
         doc.fontSize(16).font("Times-Bold").fillColor(ink)
-          .text(ownerName, L, 205, { width: CW, align: "center" });
+          .text(ownerName, L, 223, { width: CW, align: "center" });
 
         doc.fontSize(11).font("Times-Italic").fillColor(inkSoft)
-          .text("is the registered and verified owner of the subdomain", L, 230, { width: CW, align: "center" });
+          .text("is the registered and verified owner of the subdomain", L, 248, { width: CW, align: "center" });
 
         doc.fontSize(25).font("Times-Bold").fillColor(ink)
-          .text(fullDomain, L, 252, { width: CW, align: "center" });
+          .text(fullDomain, L, 270, { width: CW, align: "center" });
 
         doc.lineWidth(1).strokeColor(bronze)
-          .moveTo(cx - 80, 288).lineTo(cx + 80, 288).stroke();
+          .moveTo(cx - 80, 306).lineTo(cx + 80, 306).stroke();
 
         // ---- details band ----
-        const bandY = 304;
+        const bandY = 322;
         const bandH = 46;
         doc.lineWidth(0.5).strokeColor(line);
         doc.moveTo(L, bandY).lineTo(R, bandY).stroke();

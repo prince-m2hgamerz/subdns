@@ -152,6 +152,31 @@ export function StatusContent() {
         )}
       </div>
 
+      <section className="space-y-4">
+        <h2 className="text-2xl font-semibold">What We Monitor</h2>
+        <div className="space-y-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+          <p>
+            Every service listed below is checked from multiple geographic regions every 60 seconds.
+            We monitor DNS resolution latency, API endpoint availability, website response times, and
+            Cloudflare edge health. A service is marked <strong className="text-foreground">Operational</strong> when all probes
+            return a successful response within acceptable latency thresholds. If any probe fails or
+            exceeds its timeout, the service is marked <strong className="text-foreground">Degraded</strong> and we begin
+            investigating immediately.
+          </p>
+          <p>
+            When an incident is detected, our on-call team receives an automated alert within 30 seconds.
+            We publish incident timelines, root cause analyses, and resolution summaries to this status
+            page so you always have visibility into what happened and why. Planned maintenance is announced
+            at least 24 hours in advance.
+          </p>
+          <p>
+            This status page is itself hosted independently of the services it monitors. If you cannot
+            reach this page, check our social media channels or contact support directly at{" "}
+            <span className="text-foreground">subdns@m2hio.in</span>.
+          </p>
+        </div>
+      </section>
+
       {data && (
         <>
           <section className="space-y-3">

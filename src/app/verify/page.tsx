@@ -54,6 +54,10 @@ export default function VerifyPage({
   };
 
   useEffect(() => {
+    document.title = "Verify a Certificate — SubDNS";
+  }, []);
+
+  useEffect(() => {
     if (initialCertId) {
       doVerify(initialCertId);
     }

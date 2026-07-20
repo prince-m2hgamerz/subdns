@@ -15,11 +15,22 @@ export async function GET(req: NextRequest) {
 
   const { data: keys } = await supabase
     .from("api_keys")
-    .select("id, name, key, last_used, created_at")
+    .select("id, name, key, scopes, description, expires_at, last_used, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  return NextResponse.json({ keys });
+  const mapped = (keys ?? []).map((k) => ({
+    id: k.id,
+    name: k.name,
+    key: `${k.key.slice(0, 12)}...`,
+    scopes: k.scopes ?? [],
+    description: k.description ?? "",
+    expiresAt: k.expires_at,
+    lastUsed: k.last_used,
+    createdAt: k.created_at,
+  }));
+
+  return NextResponse.json({ keys: mapped });
 }
 
 export async function POST(req: NextRequest) {
@@ -28,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name } = await req.json();
+  const { name, scopes, description, expiresAt } = await req.json();
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
@@ -56,9 +67,21 @@ export async function POST(req: NextRequest) {
 
   const key = `subdns_${generateApiKey()}`;
 
+  const validScopes = Array.isArray(scopes) ? scopes : [];
+  const insertData: Record<string, unknown> = {
+    name,
+    key,
+    user_id: userId,
+    scopes: validScopes.length > 0 ? validScopes : null,
+    description: description ?? "",
+    expires_at: expiresAt ?? null,
+  };
+  // Remove null values so defaults apply
+  Object.keys(insertData).forEach((k) => insertData[k] == null && delete insertData[k]);
+
   const { data: apiKey } = await supabase
     .from("api_keys")
-    .insert({ name, key, user_id: userId })
+    .insert(insertData)
     .select("id, name, key")
     .single();
 

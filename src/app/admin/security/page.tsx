@@ -24,12 +24,13 @@ type Pagination = {
   pages: number;
 };
 
-const SECURITY_TYPES = ["ALL", "SECURITY_EVENT", "LOGIN", "API_KEY_CREATED", "API_KEY_DELETED"];
+const SECURITY_TYPES = ["ALL", "SECURITY_EVENT", "LOGIN", "API_KEY_CREATED", "API_KEY_UPDATED", "API_KEY_DELETED"];
 
 const securityBadgeVariant: Record<string, "destructive" | "warning" | "default" | "primary"> = {
   SECURITY_EVENT: "destructive",
   LOGIN: "default",
   API_KEY_CREATED: "warning",
+  API_KEY_UPDATED: "warning",
   API_KEY_DELETED: "destructive",
 };
 

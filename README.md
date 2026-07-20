@@ -207,17 +207,16 @@ npm run dev                  # http://localhost:3000
 
 ---
 
-## Docker Deployment
+## Deploy to Vercel
 
-```bash
-docker-compose up -d
-```
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fprince-m2hgamerz%2Fsubdns)
 
-This starts PostgreSQL + the SubDNS app on port 3000.
+1. Fork this repo and import it into [Vercel](https://vercel.com/new)
+2. Set a **PostgreSQL** database (Neon, Supabase, etc.) and add `DATABASE_URL` to your Vercel environment variables
+3. Add the remaining env vars (see `.env.example`)
+4. Deploy — Vercel detects Next.js automatically
 
 ---
-
-## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 

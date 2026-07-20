@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { getUserId } from "@/lib/get-user-id";
+import { createHmac } from "crypto";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getUserId(req);
@@ -34,13 +35,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   };
 
   if (webhook.secret) {
-    const { createHmac } = await import("crypto");
     headers["X-SubDNS-Signature-256"] = createHmac("sha256", webhook.secret)
       .update(body)
       .digest("hex");
   }
 
+  const start = Date.now();
   let status = 0;
+  let responseBody = "";
+
   try {
     const res = await fetch(webhook.url, {
       method: "POST",
@@ -49,14 +52,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       signal: AbortSignal.timeout(10000),
     });
     status = res.status;
-  } catch {
+    responseBody = await res.text().catch(() => "");
+  } catch (err) {
     status = 0;
+    responseBody = err instanceof Error ? err.message : "Request failed";
   }
+
+  const durationMs = Date.now() - start;
+  const ok = status >= 200 && status < 300;
 
   await supabase
     .from("webhooks")
     .update({ last_sent_at: new Date().toISOString(), last_status: status })
     .eq("id", id);
 
-  return NextResponse.json({ status, ok: status >= 200 && status < 300 });
+  await supabase.from("webhook_deliveries").insert({
+    webhook_id: id,
+    event: "test.ping",
+    url: webhook.url,
+    status,
+    ok,
+    request_body: body.slice(0, 10000),
+    response_body: responseBody.slice(0, 10000),
+    duration_ms: durationMs,
+    attempt: 1,
+    max_retries: 0,
+  });
+
+  return NextResponse.json({ status, ok, duration_ms: durationMs });
 }

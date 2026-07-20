@@ -1,24 +1,41 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
+
+const ADSENSE_SRC = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8492704974936957";
+
+function loadAdSense() {
+  if (document.querySelector(`script[src="${ADSENSE_SRC}"]`)) return;
+  const script = document.createElement("script");
+  script.src = ADSENSE_SRC;
+  script.async = true;
+  document.head.appendChild(script);
+}
 
 export function CookieConsent() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const consented = localStorage.getItem("cookie-consent");
-    if (!consented) {
+    const consent = localStorage.getItem("cookie-consent");
+    if (consent === "accepted") {
+      loadAdSense();
+    } else if (!consent) {
       const timer = setTimeout(() => setVisible(true), 500);
       return () => clearTimeout(timer);
     }
   }, []);
 
-  function accept() {
+  const accept = useCallback(() => {
     localStorage.setItem("cookie-consent", "accepted");
+    loadAdSense();
     setVisible(false);
-  }
+  }, []);
+
+  const reject = useCallback(() => {
+    localStorage.setItem("cookie-consent", "rejected");
+    setVisible(false);
+  }, []);
 
   if (!visible) return null;
 
@@ -35,17 +52,16 @@ export function CookieConsent() {
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <button
+            onClick={reject}
+            className="rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            Reject All
+          </button>
+          <button
             onClick={accept}
             className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
           >
-            Accept
-          </button>
-          <button
-            onClick={() => setVisible(false)}
-            className="rounded-md p-2 text-muted-foreground hover:text-foreground"
-            aria-label="Close cookie notice"
-          >
-            <X className="h-4 w-4" />
+            Accept All
           </button>
         </div>
       </div>

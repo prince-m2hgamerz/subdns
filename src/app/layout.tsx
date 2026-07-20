@@ -3,7 +3,6 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Providers } from "@/components/providers";
 import { SmoothScroll } from "@/components/smooth-scroll";
-import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -82,11 +81,6 @@ export default function RootLayout({
       <head>
       </head>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8492704974936957"
-          strategy="afterInteractive"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

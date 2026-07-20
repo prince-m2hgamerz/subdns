@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/admin-auth-guard";
 
-const SECURITY_TYPES = ["SECURITY_EVENT", "LOGIN", "API_KEY_CREATED", "API_KEY_DELETED"];
+const SECURITY_TYPES = ["SECURITY_EVENT", "LOGIN", "API_KEY_CREATED", "API_KEY_UPDATED", "API_KEY_DELETED"];
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin();

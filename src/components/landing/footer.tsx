@@ -30,6 +30,7 @@ const footerLinks: FooterGroup[] = [
       { label: "API Reference", href: "/docs/api" },
       { label: "Get Started", href: "/auth/register" },
       { label: "Status", href: "/status" },
+      { label: "FAQ", href: "/faq" },
       { label: "Verify Certificate", href: "/verify" },
       { label: "Changelog", href: "/changelog" },
     ],

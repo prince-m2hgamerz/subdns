@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import fs from "fs";
 import path from "path";
-import { Navbar } from "@/components/landing/navbar";
-import { Footer } from "@/components/landing/footer";
+import type { Metadata } from "next";
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
@@ -16,7 +16,26 @@ const tutorialMeta: Record<string, { title: string }> = {
   "how-subdns-works": { title: "How SubDNS Works" },
   "dns-management": { title: "DNS Management" },
   "cli-guide": { title: "CLI Guide" },
+  "dns-record-types-deep-dive": { title: "DNS Record Types Deep Dive" },
+  "cloudflare-proxy-ssl-guide": { title: "Cloudflare Proxy & SSL Guide" },
+  "dns-propagation-ttl": { title: "DNS Propagation & TTL Explained" },
+  "dnssec-explained": { title: "DNSSEC Explained" },
+  "troubleshooting-dns-issues": { title: "Troubleshooting DNS Issues" },
+  "subdomain-use-cases": { title: "Subdomain Use Cases" },
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const meta = tutorialMeta[slug] ?? { title: slug.replace(/-/g, " ") };
+  const title = `${meta.title} — SubDNS Tutorials`;
+  return {
+    title,
+    description: `Learn how to ${meta.title.toLowerCase()} with SubDNS. Step-by-step tutorial for managing DNS records, subdomains, and Cloudflare settings.`,
+    alternates: {
+      canonical: `https://subdns.m2hio.in/docs/tutorials/${slug}`,
+    },
+  };
+}
 
 export function generateStaticParams() {
   if (!fs.existsSync(tutorialsDir)) return [];
@@ -184,26 +203,20 @@ export default async function TutorialPage({ params }: { params: Promise<{ slug:
   const meta = tutorialMeta[slug] ?? { title: slug };
 
   return (
-    <>
-      <Navbar />
-      <main className="pt-16">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-          <Link
-            href="/dashboard/tutorials"
-            className="mb-12 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to tutorials
-          </Link>
+    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+      <Link
+        href="/dashboard/tutorials"
+        className="mb-12 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to tutorials
+      </Link>
 
-          <article>
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-              {content}
-            </ReactMarkdown>
-          </article>
-        </div>
-      </main>
-      <Footer />
-    </>
+      <article>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+          {content}
+        </ReactMarkdown>
+      </article>
+    </div>
   );
 }

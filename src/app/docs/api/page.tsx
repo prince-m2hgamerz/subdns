@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/landing/navbar";
-import { Footer } from "@/components/landing/footer";
 
 export const metadata: Metadata = {
   title: "API Reference — SubDNS",
@@ -132,10 +130,7 @@ function InlineCode({ children }: { children: React.ReactNode }) {
 
 export default function ApiDocsPage() {
   return (
-    <>
-      <Navbar />
-      <main className="pt-16">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="space-y-4">
             <h1 className="display-lg">API Reference</h1>
             <p className="text-lg text-muted-foreground">
@@ -250,8 +245,5 @@ export default function ApiDocsPage() {
             </p>
           </section>
         </div>
-      </main>
-      <Footer />
-    </>
   );
 }

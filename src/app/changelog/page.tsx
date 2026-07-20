@@ -5,10 +5,72 @@ import { Footer } from "@/components/landing/footer";
 export const metadata: Metadata = {
   title: "Changelog — SubDNS",
   description:
-    "Every update, every improvement, every fix that makes your free corner of the internet better. Transparent releases for a platform built for developers.",
+    "Track every SubDNS release, including new features, AI improvements, DNS capabilities, security enhancements, and platform updates.",
 };
 
 const releases = [
+  {
+    version: "v2.4.0",
+    date: "July 19, 2026",
+    changes: [
+      {
+        type: "feature",
+        text: "AI-powered RAG architecture — introduced Retrieval-Augmented Generation (RAG) to provide accurate, context-aware responses using project knowledge.",
+      },
+      {
+        type: "feature",
+        text: "Knowledge indexing pipeline — automatically crawls documentation, chunks content, generates embeddings, and stores searchable knowledge in Supabase.",
+      },
+      {
+        type: "feature",
+        text: "Semantic search powered by pgvector — instantly retrieve the most relevant knowledge using vector similarity search.",
+      },
+      {
+        type: "feature",
+        text: "AI orchestration engine — intelligently manages conversations, context retrieval, tool execution, and response generation.",
+      },
+      {
+        type: "feature",
+        text: "Tool execution framework — securely execute internal tools to retrieve user-specific account and platform information.",
+      },
+      {
+        type: "feature",
+        text: "Embedding generation service — supports both single and batch embedding generation for efficient knowledge indexing.",
+      },
+      {
+        type: "feature",
+        text: "Persistent conversation memory — conversations are stored and reused to provide better contextual responses.",
+      },
+      {
+        type: "feature",
+        text: "Subdomain knowledge index — dedicated vector knowledge base for DNS, subdomains, documentation, and platform resources.",
+      },
+      {
+        type: "feature",
+        text: "NVIDIA AI model support — centralized AI configuration with support for NVIDIA inference models and future multi-provider expansion.",
+      },
+      {
+        type: "feature",
+        text: "Structured AI prompt system — introduced modular prompt blocks and tool schemas for more reliable and deterministic AI responses.",
+      },
+      {
+        type: "improvement",
+        text: "Database architecture expanded with pgvector-powered semantic search, knowledge chunks, conversations, and optimized indexing.",
+      },
+      {
+        type: "improvement",
+        text: "Improved retrieval accuracy through optimized document chunking, embedding generation, and context ranking.",
+      },
+      {
+        type: "improvement",
+        text: "Enhanced AI response formatting with intelligent tool detection and structured output generation.",
+      },
+      {
+        type: "fix",
+        text: "Improved knowledge retrieval consistency and reduced irrelevant AI responses through refined search algorithms.",
+      },
+    ],
+  },
   {
     version: "v2.3.0",
     date: "July 13, 2026",
@@ -210,9 +272,10 @@ export default function ChangelogPage() {
             <h1 className="text-4xl font-bold tracking-tight">Changelog</h1>
 
             <p className="text-lg text-neutral-600 dark:text-neutral-400">
-              We ship constantly to make your corner of the internet faster,
-              more capable, and more delightful. Every feature, improvement,
-              and fix is documented here—because transparency matters.
+              Every release makes SubDNS faster, smarter, and more capable.
+              From DNS improvements and platform features to AI-powered
+              enhancements, we believe every meaningful change should be
+              transparent and documented.
             </p>
           </div>
 
@@ -221,8 +284,9 @@ export default function ChangelogPage() {
               <div key={release.version} className="relative pl-10">
                 <div className="absolute left-2.5 top-1.5 h-3 w-3 rounded-full border-2 border-neutral-300 bg-background dark:border-neutral-600" />
 
-                <div className="mb-1 flex items-baseline gap-3">
+                <div className="mb-1 flex flex-wrap items-baseline gap-3">
                   <h2 className="text-xl font-semibold">{release.version}</h2>
+
                   <span className="text-sm text-neutral-500">
                     {release.date}
                   </span>

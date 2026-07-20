@@ -98,6 +98,17 @@ export interface UptimeCheck {
   checkedAt: string;
 }
 
+export interface ApiKeyItem {
+  id: string;
+  name: string;
+  key: string;
+  scopes: string[];
+  description: string;
+  expiresAt: string | null;
+  lastUsed: string | null;
+  createdAt: string;
+}
+
 export interface DnsAnalytics {
   period: string;
   queries: number;

@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/landing/hero";
+import { WhySubDNS } from "@/components/landing/why-subdns";
 import { Features } from "@/components/landing/features";
 import { TerminalDemo } from "@/components/landing/terminal-demo";
 import { RecentlyShipped } from "@/components/landing/recently-shipped";
@@ -13,6 +14,7 @@ export default function Home() {
     <>
       <Navbar />
       <Hero />
+      <WhySubDNS />
       <Features />
       <TerminalDemo />
       <RecentlyShipped />

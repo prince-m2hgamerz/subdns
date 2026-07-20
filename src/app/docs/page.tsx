@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/landing/navbar";
-import { Footer } from "@/components/landing/footer";
 
 export const metadata: Metadata = {
   title: "Documentation — SubDNS",
   description:
     "Learn how to claim your free corner of the internet, manage DNS records, and automate everything with the SubDNS API.",
+  alternates: { canonical: "https://subdns.m2hio.in/docs" },
 };
 
 export default function DocsPage() {
   return (
-    <>
-      <Navbar />
-      <main className="pt-16">
-      <div className="mx-auto max-w-3xl space-y-12 py-16">
+    <div className="mx-auto max-w-3xl space-y-12 py-16">
       <div className="space-y-4">
         <h1 className="display-lg">Documentation</h1>
         <p className="text-lg text-muted-foreground">
@@ -102,6 +98,32 @@ export default function DocsPage() {
       </section>
 
       <section className="space-y-4">
+        <h2 className="display-sm">Knowledge Center</h2>
+        <p className="text-muted-foreground">
+          Deep-dive guides on DNS concepts, troubleshooting, and practical use cases for your free
+          subdomain.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            { title: "DNS Record Types Deep Dive", href: "/docs/tutorials/dns-record-types-deep-dive" },
+            { title: "Cloudflare Proxy & SSL Guide", href: "/docs/tutorials/cloudflare-proxy-ssl-guide" },
+            { title: "DNS Propagation & TTL", href: "/docs/tutorials/dns-propagation-ttl" },
+            { title: "DNSSEC Explained", href: "/docs/tutorials/dnssec-explained" },
+            { title: "Troubleshooting DNS Issues", href: "/docs/tutorials/troubleshooting-dns-issues" },
+            { title: "Subdomain Use Cases", href: "/docs/tutorials/subdomain-use-cases" },
+          ].map((article) => (
+            <a
+              key={article.href}
+              href={article.href}
+              className="rounded-xl border border-border bg-card p-4 text-sm font-medium text-foreground transition-all hover:border-primary/50 hover:shadow-sm"
+            >
+              {article.title}
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-4">
         <h2 className="display-sm">API Endpoints</h2>
         <div className="space-y-3">
           {[
@@ -136,8 +158,5 @@ export default function DocsPage() {
         </div>
       </section>
       </div>
-      </main>
-      <Footer />
-    </>
   );
 }

@@ -19,6 +19,8 @@ import {
   HeartPulse,
   RefreshCw,
   Receipt,
+  Code2,
+  Bot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -34,6 +36,8 @@ const links = [
   { href: "/dashboard/billing", icon: Receipt, label: "Billing" },
   { href: "/dashboard/api-keys", icon: Key, label: "API Keys" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+  { href: "/developer", icon: Code2, label: "Developer" },
+  { href: "/dashboard/ai-assistant", icon: Bot, label: "AI Assistant" },
   { href: "/dashboard/upgrade", icon: Zap, label: "Upgrade" },
   { href: "/dashboard/tutorials", icon: BookOpen, label: "Tutorials" },
   { href: "/dashboard/reports", icon: Bug, label: "My Reports" },

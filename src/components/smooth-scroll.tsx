@@ -13,7 +13,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const lenisRef = useRef<Lenis | null>(null);
 
-  const isDashboardRoute = pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin");
+  const isDashboardRoute = pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin") || pathname?.startsWith("/developer");
   const isTouch = isTouchDevice();
 
   useEffect(() => {

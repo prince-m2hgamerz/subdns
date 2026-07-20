@@ -77,6 +77,32 @@ export default function SecurityPage() {
 
         <section className="section-pad border-t border-border">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-3xl">
+              <h2 className="display-sm">Infrastructure &amp; Compliance</h2>
+              <div className="mt-8 space-y-4">
+                <div className="rounded-md border border-border bg-card p-5">
+                  <h3 className="text-sm font-semibold text-foreground">TLS 1.3 &amp; Cipher Suites</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">All connections to SubDNS require TLS 1.2 or 1.3. We enforce strong cipher suites and disable deprecated protocols (SSLv3, TLS 1.0, TLS 1.1). Certificate management is fully automated through Cloudflare — every subdomain receives a shared or dedicated certificate that renews automatically before expiration.</p>
+                </div>
+                <div className="rounded-md border border-border bg-card p-5">
+                  <h3 className="text-sm font-semibold text-foreground">Data Storage &amp; Encryption</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Account data, DNS record configurations, and API tokens are stored encrypted at rest using AES-256. We use Cloudflare D1 for primary storage with automated backups. API tokens are hashed before storage — plaintext tokens are shown only once at creation. We do not log DNS query contents or monitor the traffic flowing through your subdomains.</p>
+                </div>
+                <div className="rounded-md border border-border bg-card p-5">
+                  <h3 className="text-sm font-semibold text-foreground">Network &amp; Edge Security</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">SubDNS runs entirely on Cloudflare Workers and Cloudflare's global edge network. All traffic passes through Cloudflare's Web Application Firewall (WAF), DDoS mitigation, and bot management before reaching our services. We enable rate limiting on all API endpoints to prevent abuse, and we monitor for suspicious patterns continuously.</p>
+                </div>
+                <div className="rounded-md border border-border bg-card p-5">
+                  <h3 className="text-sm font-semibold text-foreground">Service Level &amp; Uptime</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">The DNS control plane (dashboard, CLI, API) targets 99.9% uptime. DNS resolution for your subdomains is handled by Cloudflare's global anycast network, which has a proven 100% uptime track record. Status monitoring and incident communication are available at /status.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="section-pad border-t border-border">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl">
               <h2 className="display-sm">Responsible Disclosure</h2>
               <p className="mt-4 text-base leading-relaxed text-muted-foreground">

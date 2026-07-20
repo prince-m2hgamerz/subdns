@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Navbar } from "@/components/landing/navbar";
-import { Footer } from "@/components/landing/footer";
+import { useState, useMemo, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 
 const osOptions = [
@@ -137,155 +135,153 @@ export default function CliDocsPage() {
     );
   }, [query]);
 
+  useEffect(() => {
+    document.title = "CLI Reference — SubDNS";
+  }, []);
+
   return (
-    <>
-      <Navbar />
-      <main className="pt-16">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="space-y-4">
-            <h1 className="display-lg">CLI Reference</h1>
-            <p className="text-lg text-muted-foreground">
-              The SubDNS CLI puts the full power of your free corner of the internet in your terminal. Claim subdomains, add DNS records, check logs — all without leaving your keyboard.
-            </p>
-          </div>
+    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="space-y-4">
+        <h1 className="display-lg">CLI Reference</h1>
+        <p className="text-lg text-muted-foreground">
+          The SubDNS CLI puts the full power of your free corner of the internet in your terminal. Claim subdomains, add DNS records, check logs — all without leaving your keyboard.
+        </p>
+      </div>
 
-          <section className="section-pad">
-            <h2 className="display-sm">Installation</h2>
-            <p className="mt-4 text-muted-foreground">
-              Choose your platform:
-            </p>
+      <section className="section-pad">
+        <h2 className="display-sm">Installation</h2>
+        <p className="mt-4 text-muted-foreground">
+          Choose your platform:
+        </p>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {osOptions.map((opt) => (
-                <button
-                  key={opt.id}
-                  onClick={() => setOs(opt.id)}
-                  className={`cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                    os === opt.id
-                      ? "border-primary bg-primary-muted text-primary shadow-sm"
-                      : "border-border bg-card text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {installCommands[os].map((m) => (
-                <div key={m.title}>
-                  {m.title && (
-                    <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      {m.title}
-                    </p>
-                  )}
-                  <CodeBlock code={m.code} />
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-3 text-sm text-muted-foreground">
-              Requires <span className="text-foreground">Node.js 18</span> or later.
-            </p>
-          </section>
-
-          <section className="section-pad">
-            <h2 className="display-sm">Authentication</h2>
-            <p className="mt-4 text-muted-foreground">
-              Generate an API key from your <a href="/dashboard/api-keys" className="text-primary underline underline-offset-2">dashboard</a>, then authenticate your CLI:
-            </p>
-            <CodeBlock code="subdns login subdns_xxxxxxxxxxxx" />
-            <p className="mt-2 text-muted-foreground">
-              The key is stored locally in <InlineCode>~/.config/subdns/config.json</InlineCode>. Run <InlineCode>subdns logout</InlineCode> to remove it.
-            </p>
-          </section>
-
-          <section className="section-pad">
-            <div className="flex items-center justify-between">
-              <h2 className="display-sm">Commands</h2>
-              <Badge variant="primary">{commands.length} total</Badge>
-            </div>
-
-            <div className="mt-4">
-              <input
-                type="text"
-                placeholder="Search commands..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
-
-            {filtered.length === 0 ? (
-              <p className="mt-8 text-center text-muted-foreground">
-                No commands match <InlineCode>{query}</InlineCode>
-              </p>
-            ) : (
-              <div className="mt-6 space-y-8">
-                {groups.map((group) => {
-                  const groupCommands = filtered.filter((c) => c.group === group.key);
-                  if (groupCommands.length === 0) return null;
-                  return (
-                    <div key={group.key} className="space-y-3">
-                      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                        {group.label}
-                      </h3>
-                      <div className="space-y-3">
-                        {groupCommands.map((c) => (
-                          <div
-                            key={c.cmd}
-                            className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-gray-250 hover:shadow-sm"
-                          >
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                              <code className="shrink-0 font-mono text-sm font-semibold text-primary">
-                                {c.cmd}
-                              </code>
-                              <span className="text-sm text-muted-foreground">{c.desc}</span>
-                            </div>
-                            <div className="group relative mt-2">
-                              <pre className="overflow-x-auto rounded-lg bg-card p-3 text-xs leading-relaxed text-foreground">
-                                <code>{`$ ${c.example}`}</code>
-                              </pre>
-                              <CopyButton text={`$ ${c.example}`} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <section className="section-pad">
-            <h2 className="display-sm">Global Flags</h2>
-            <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-card">
-                    <th className="px-5 py-3.5 text-left font-semibold text-foreground">Flag</th>
-                    <th className="px-5 py-3.5 text-left font-semibold text-foreground">Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { flag: "--json", desc: "Output results as JSON" },
-                    { flag: "--api-url", desc: "Custom API endpoint" },
-                    { flag: "--help", desc: "Display help information" },
-                  ].map((f) => (
-                    <tr key={f.flag} className="border-b border-border last:border-0">
-                      <td className="px-5 py-3.5 font-mono text-foreground">{f.flag}</td>
-                      <td className="px-5 py-3.5 text-muted-foreground">{f.desc}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {osOptions.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setOs(opt.id)}
+              className={`cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                os === opt.id
+                  ? "border-primary bg-primary-muted text-primary shadow-sm"
+                  : "border-border bg-card text-muted-foreground hover:border-gray-300 hover:text-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
-      </main>
-      <Footer />
-    </>
+
+        <div className="mt-4 space-y-3">
+          {installCommands[os].map((m) => (
+            <div key={m.title}>
+              {m.title && (
+                <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {m.title}
+                </p>
+              )}
+              <CodeBlock code={m.code} />
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-3 text-sm text-muted-foreground">
+          Requires <span className="text-foreground">Node.js 18</span> or later.
+        </p>
+      </section>
+
+      <section className="section-pad">
+        <h2 className="display-sm">Authentication</h2>
+        <p className="mt-4 text-muted-foreground">
+          Generate an API key from your <a href="/dashboard/api-keys" className="text-primary underline underline-offset-2">dashboard</a>, then authenticate your CLI:
+        </p>
+        <CodeBlock code="subdns login subdns_xxxxxxxxxxxx" />
+        <p className="mt-2 text-muted-foreground">
+          The key is stored locally in <InlineCode>~/.config/subdns/config.json</InlineCode>. Run <InlineCode>subdns logout</InlineCode> to remove it.
+        </p>
+      </section>
+
+      <section className="section-pad">
+        <div className="flex items-center justify-between">
+          <h2 className="display-sm">Commands</h2>
+          <Badge variant="primary">{commands.length} total</Badge>
+        </div>
+
+        <div className="mt-4">
+          <input
+            type="text"
+            placeholder="Search commands..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
+
+        {filtered.length === 0 ? (
+          <p className="mt-8 text-center text-muted-foreground">
+            No commands match <InlineCode>{query}</InlineCode>
+          </p>
+        ) : (
+          <div className="mt-6 space-y-8">
+            {groups.map((group) => {
+              const groupCommands = filtered.filter((c) => c.group === group.key);
+              if (groupCommands.length === 0) return null;
+              return (
+                <div key={group.key} className="space-y-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    {group.label}
+                  </h3>
+                  <div className="space-y-3">
+                    {groupCommands.map((c) => (
+                      <div
+                        key={c.cmd}
+                        className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-gray-250 hover:shadow-sm"
+                      >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                          <code className="shrink-0 font-mono text-sm font-semibold text-primary">
+                            {c.cmd}
+                          </code>
+                          <span className="text-sm text-muted-foreground">{c.desc}</span>
+                        </div>
+                        <div className="group relative mt-2">
+                          <pre className="overflow-x-auto rounded-lg bg-card p-3 text-xs leading-relaxed text-foreground">
+                            <code>{`$ ${c.example}`}</code>
+                          </pre>
+                          <CopyButton text={`$ ${c.example}`} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="section-pad">
+        <h2 className="display-sm">Global Flags</h2>
+        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-card">
+                <th className="px-5 py-3.5 text-left font-semibold text-foreground">Flag</th>
+                <th className="px-5 py-3.5 text-left font-semibold text-foreground">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { flag: "--json", desc: "Output results as JSON" },
+                { flag: "--api-url", desc: "Custom API endpoint" },
+                { flag: "--help", desc: "Display help information" },
+              ].map((f) => (
+                <tr key={f.flag} className="border-b border-border last:border-0">
+                  <td className="px-5 py-3.5 font-mono text-foreground">{f.flag}</td>
+                  <td className="px-5 py-3.5 text-muted-foreground">{f.desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   );
 }

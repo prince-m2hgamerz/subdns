@@ -100,6 +100,36 @@ export function PricingPage() {
             </p>
           </div>
         </div>
+
+        <section className="section-pad border-t border-border">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-3xl">
+              <h2 className="display-sm text-center">Plan Comparison FAQ</h2>
+              <div className="mt-8 space-y-4">
+                <div className="rounded-md border border-border bg-card p-5">
+                  <h3 className="text-sm font-semibold text-foreground">Can I upgrade from Bronze to Silver without losing my subdomains?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Yes. Upgrading preserves all existing subdomains and DNS records. You gain access to additional features immediately, and your billing is prorated for the remainder of the month.</p>
+                </div>
+                <div className="rounded-md border border-border bg-card p-5">
+                  <h3 className="text-sm font-semibold text-foreground">What happens if I downgrade or cancel?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">You keep access until the end of your billing cycle. After that, your account reverts to Bronze limits. If you exceed Bronze limits, we will notify you before any action is taken, giving you time to upgrade or clean up unused subdomains.</p>
+                </div>
+                <div className="rounded-md border border-border bg-card p-5">
+                  <h3 className="text-sm font-semibold text-foreground">Is there a free trial for Silver or Gold?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Bronze is always free and includes 2 subdomains with basic DNS records. Silver and Gold do not offer a free trial, but you can start on Bronze and upgrade at any time — all your configuration carries over.</p>
+                </div>
+                <div className="rounded-md border border-border bg-card p-5">
+                  <h3 className="text-sm font-semibold text-foreground">Which plan supports Cloudflare proxying (orange cloud)?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Cloudflare proxy — which provides DDoS protection, SSL, and CDN caching — is available on Silver and above. Bronze records are DNS-only. If you need proxying for a single production site, Silver is the right plan.</p>
+                </div>
+                <div className="rounded-md border border-border bg-card p-5">
+                  <h3 className="text-sm font-semibold text-foreground">Can I pay annually for a discount?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Not yet, but annual billing is on our roadmap. Follow our changelog or contact us to be notified when it ships.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </>

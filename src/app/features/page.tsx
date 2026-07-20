@@ -6,11 +6,25 @@ import { Footer } from "@/components/landing/footer";
 export const metadata: Metadata = {
   title: "Everything SubDNS — SubDNS",
   description: "Free subdomains on m2hio.in with full DNS control, Cloudflare global edge, CLI & API access, and developer-first tools.",
+  alternates: { canonical: "https://subdns.m2hio.in/features" },
 };
 
 export default function FeaturesPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Everything SubDNS — Features",
+    description: "Free subdomains on m2hio.in with full DNS control, Cloudflare global edge, CLI & API access, and developer-first tools.",
+    url: "https://subdns.m2hio.in/features",
+    about: {
+      "@type": "Thing",
+      name: "SubDNS Features",
+      description: "Free subdomain service with DNS management, Cloudflare proxy, CLI, API, and security tools.",
+    },
+  };
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Navbar />
       <main className="pt-16">
         <div className="section-pad">
@@ -23,6 +37,30 @@ export default function FeaturesPage() {
             </div>
           </div>
         </div>
+        <section className="section-pad border-t border-border">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-3xl">
+              <h2 className="display-sm text-center">Three Ways to Use SubDNS</h2>
+              <div className="mt-8 grid gap-6 sm:grid-cols-3">
+                <div className="rounded-md border border-border bg-card p-5">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Web UI</div>
+                  <h3 className="font-semibold text-foreground">Dashboard-first</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Claim subdomains, manage DNS records, and monitor activity — all from your browser. No installation needed.</p>
+                </div>
+                <div className="rounded-md border border-border bg-card p-5">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">CLI</div>
+                  <h3 className="font-semibold text-foreground">Terminal-native</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Manage everything from your command line. Ideal for developers who live in the terminal and want to script DNS operations.</p>
+                </div>
+                <div className="rounded-md border border-border bg-card p-5">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">API</div>
+                  <h3 className="font-semibold text-foreground">Automation-ready</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">Integrate DNS into your CI/CD pipeline, deployment scripts, or infrastructure-as-code workflows with our REST API and SDKs.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
         <Features />
         <FeatureDetail />
       </main>

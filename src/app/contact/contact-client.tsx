@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send, CheckCircle, Terminal } from "lucide-react";
+import { Send, CheckCircle, Terminal, Mail, BookOpen, MessageSquare, Clock } from "lucide-react";
 
 export function ContactPage() {
   const { data: session } = useSession();
@@ -68,12 +68,37 @@ export function ContactPage() {
         </Link>
       </header>
 
-      <main className="flex flex-1 items-center justify-center p-6">
+      <main className="flex flex-1 flex-col items-center justify-center p-6">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold">Get in Touch</h1>
+          <p className="mt-2 max-w-lg text-sm text-muted-foreground">
+            Whether you need help configuring DNS records, have questions about your subdomain, want to report abuse, or are evaluating our Enterprise plan — we respond to every inquiry within one business day.
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="flex flex-col items-center rounded-lg border border-border bg-card p-4 text-center">
+              <Mail className="mb-2 h-5 w-5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">Email Support</span>
+              <span className="mt-1 text-sm text-foreground">subdns@m2hio.in</span>
+            </div>
+            <div className="flex flex-col items-center rounded-lg border border-border bg-card p-4 text-center">
+              <BookOpen className="mb-2 h-5 w-5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">Documentation</span>
+              <span className="mt-1 text-sm text-foreground">docs.subdns.m2hio.in</span>
+            </div>
+            <div className="flex flex-col items-center rounded-lg border border-border bg-card p-4 text-center">
+              <Clock className="mb-2 h-5 w-5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">Response Time</span>
+              <span className="mt-1 text-sm text-foreground">&lt; 24 hours</span>
+            </div>
+          </div>
+        </div>
         <Card className="w-full max-w-lg">
           <CardHeader>
             <CardTitle>Contact Us</CardTitle>
             <CardDescription>
-              Have a question or need help? Send us a message.
+              Have a question about subdomains, need help with DNS configuration, or
+              interested in our Enterprise plan? Use the form below and we will get
+              back to you within 1 business day.
             </CardDescription>
           </CardHeader>
           <CardContent>

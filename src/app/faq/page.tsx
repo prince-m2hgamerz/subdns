@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   title: "FAQ — SubDNS",
   description:
     "Frequently asked questions about SubDNS free subdomain service, Cloudflare integration, DNS management, and security.",
+  alternates: { canonical: "https://subdns.m2hio.in/faq" },
 };
 
 const faqs = [
@@ -57,18 +59,64 @@ const faqs = [
     q: "How do I delete my account?",
     a: "You can delete your account from the dashboard settings page, which removes all your subdomains and DNS records. Contact support if you need assistance.",
   },
+  {
+    q: "How many subdomains can I create?",
+    a: "Free accounts can create up to 25 subdomains. If you need more for team projects or staging environments, reach out to us about our Enterprise plan which offers higher limits and dedicated support.",
+  },
+  {
+    q: "How long does DNS propagation take?",
+    a: "Because SubDNS runs on Cloudflare's edge network, DNS changes typically propagate globally within 30 to 60 seconds. We recommend setting TTL values as low as 120 seconds during active development and raising them to 3600 seconds once your configuration is stable.",
+  },
+  {
+    q: "Does SubDNS support DNSSEC?",
+    a: "Yes. DNSSEC adds a cryptographic layer of trust to your DNS records, protecting against spoofing and cache poisoning. You can enable DNSSEC from your subdomain settings page. Once enabled, Cloudflare automatically signs your zone and publishes the DS records.",
+  },
+  {
+    q: "Can I share subdomains with my team?",
+    a: "Subdomains are tied to your account, but you can delegate DNS management to team members by sharing your API keys or by setting up delegation NS records that point to your own authoritative nameservers. Enterprise accounts get dedicated team management features.",
+  },
+  {
+    q: "Are there rate limits on the API?",
+    a: "The free API tier allows 60 requests per minute per API key. This is sufficient for most automation and CI/CD workflows. Response headers include your current rate limit status. If you need higher limits, contact us about an upgraded plan.",
+  },
+  {
+    q: "Do you monitor subdomains for abuse?",
+    a: "Yes. We scan subdomains daily for phishing, malware, and policy violations. Suspicious activity triggers an automated review, and confirmed violations result in immediate suspension. Legitimate users are notified before any action is taken.",
+  },
+  {
+    q: "Can I migrate my existing DNS records to SubDNS?",
+    a: "Yes. Your dashboard includes a bulk import tool that accepts BIND zone files and common DNS provider exports. After importing, update your subdomain's nameservers to Cloudflare and the migration is complete. Our support team can assist with complex migrations.",
+  },
 ];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.a,
+    },
+  })),
+};
 
 export default function FAQPage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <>
+      <Script
+        id="faq-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold">Frequently Asked Questions</h1>
       <p className="mt-2 text-sm text-neutral-500">
         Everything you need to know about SubDNS.
       </p>
-
       <div className="mt-8 space-y-8">
         {faqs.map((faq, i) => (
           <section key={i}>
@@ -82,5 +130,6 @@ export default function FAQPage() {
       </main>
       <Footer />
     </div>
+    </>
   );
 }

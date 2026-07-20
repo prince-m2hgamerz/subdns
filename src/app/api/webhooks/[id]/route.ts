@@ -2,6 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { getUserId } from "@/lib/get-user-id";
 
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const userId = await getUserId(req);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const { data } = await supabase
+    .from("webhooks")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .single();
+
+  if (!data) {
+    return NextResponse.json({ error: "Webhook not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(data);
+}
+
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getUserId(req);
   if (!userId) {
@@ -33,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const body = await req.json();
   const update: Record<string, unknown> = {};
 
-  if (body.url) {
+  if (body.url !== undefined) {
     if (!body.url.startsWith("https://")) {
       return NextResponse.json({ error: "URL must start with https://" }, { status: 400 });
     }
@@ -47,11 +69,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   if (body.is_active !== undefined) {
     update.is_active = Boolean(body.is_active);
+  } else if (body.active !== undefined) {
+    update.is_active = Boolean(body.active);
   }
   if (body.secret !== undefined) {
     update.secret = body.secret || null;
   }
-  update.updated_at = new Date().toISOString();
+  if (body.max_retries !== undefined) {
+    const retries = Number(body.max_retries);
+    if (retries < 0 || retries > 10) {
+      return NextResponse.json({ error: "max_retries must be between 0 and 10" }, { status: 400 });
+    }
+    update.max_retries = retries;
+  }
+  if (body.regen_secret === true) {
+    const { generateWebhookSecret } = await import("@/lib/webhooks");
+    update.secret = generateWebhookSecret();
+  }
 
   const { data, error } = await supabase
     .from("webhooks")

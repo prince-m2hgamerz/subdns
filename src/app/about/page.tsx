@@ -8,6 +8,7 @@ import { Terminal, Globe, Shield, Zap } from "lucide-react";
 export const metadata: Metadata = {
   title: "About — SubDNS",
   description: "SubDNS gives every developer a free corner of the internet. Learn about our mission, our team, and why we're building the future of DNS.",
+  alternates: { canonical: "https://subdns.m2hio.in/about" },
 };
 
 const values = [
@@ -34,8 +35,21 @@ const values = [
 ];
 
 export default function AboutPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "About SubDNS",
+    description: "Every developer deserves a free home on the internet. Learn about our mission and values.",
+    url: "https://subdns.m2hio.in/about",
+    about: {
+      "@type": "Organization",
+      name: "SubDNS",
+      description: "Free subdomains for developers on m2hio.in with instant DNS management, Cloudflare proxying, and automatic SSL.",
+    },
+  };
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Navbar />
       <main className="pt-16">
         <div className="section-pad">
@@ -61,6 +75,26 @@ export default function AboutPage() {
               </p>
               <p className="mt-4 text-base leading-relaxed text-muted-foreground">
                 What started as a side project to scratch our own itch has grown into a platform serving thousands of developers worldwide — from solo hackers deploying personal projects to teams managing subdomain pools for their entire organization.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="section-pad border-t border-border">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl">
+              <h2 className="display-sm">The Story Behind SubDNS</h2>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                SubDNS started in early 2024 as a simple itch. We were tired of the friction every developer faces when they want to put something on the internet — buying domains, configuring DNS, setting up SSL. What should take seconds was taking hours, and what should be free was costing money.
+              </p>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                So we built what we wished existed: a subdomain service that took your GitHub or Google identity, gave you a subdomain instantly, and hooked into Cloudflare's edge network for DNS resolution, DDoS protection, and automatic SSL — all without a credit card or a single support ticket. What started as a tool for ourselves quickly attracted beta users from Hacker News and developer communities who wanted the same simplicity.
+              </p>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                By mid-2024 we had processed thousands of subdomain registrations. Developers were using SubDNS for personal portfolios, staging environments, API endpoints, static sites, and experimental side projects they would never have deployed if they had to go through the traditional domain setup process. That confirmed what we suspected: lowering the barrier to owning a piece of the internet unlocks creativity that would otherwise stay on a laptop.
+              </p>
+              <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                Today SubDNS serves developers from over a hundred countries. The platform has grown beyond its original CLI into a full web dashboard and REST API, supporting advanced DNS record types, team subdomain pooling, and real-time propagation logging. The core mission has not changed: give every developer a free, fast, and frustration-free corner of the internet.
               </p>
             </div>
           </div>
